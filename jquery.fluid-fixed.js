@@ -1,10 +1,17 @@
-(function ($){
+/*
+TODO:
+- make autorefresh after init (deferred start)
+- parse params from data-attributes, like top etc
+- correct resizing
+*/
+;(function ($){
 
 	$.fn.fluidFixed = function (opts){
 		var o = $.extend({
 			style: {
 				position:"fixed",
-				"z-index":"100"
+				"z-index":"100",
+				top: 0
 			},
 			copyPosition: true, //Whether clone should clone position and size of the target or not 
 			cloneTarget: true //Whether clone should clone the target or not
@@ -21,14 +28,15 @@
 		return $(this).each(function (i, el) {
 			var $el = $(el),
 				ffTop = $el.offset().top,// + $el.height(),
-				$clone = $('<div class="fluid-fixed-container"/>').insertAfter($el).append($el.clone().css({"margin":0, "left":0, "right":0}).removeClass("fluid-fixed")).css(o.style).css({"opacity": 0})
+				$clone = $el.clone().css({"margin":0, "left":0, "right":0}).removeClass("fluid-fixed"),
+				$cloneContainer = $('<div class="fluid-fixed-container"/>').insertAfter($el).append($clone).css(o.style).css({"opacity": 0})
 			
-			capturePosition($clone, $el);
+			capturePosition($cloneContainer, $el);
 
 			$el.data("fluidFixed", {
 				top: ffTop,
-				el: $clone,
-				refreshSizeAndPosition: function(){capturePosition($clone, $el)} //TODO: dynamically update position
+				el: $cloneContainer,
+				refreshSizeAndPosition: function(){capturePosition($cloneContainer, $el)} //TODO: dynamically update position
 			})
 			$(document).scroll(function (){
 				if ($(document).scrollTop() > ffTop){
@@ -52,4 +60,4 @@
 		$('.fluid-fixed').fluidFixed();
 	})
 
-})(jQuery)
+})(jQuery);
