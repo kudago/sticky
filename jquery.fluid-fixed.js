@@ -1,6 +1,3 @@
-/*
-Just centrizes one absolute container inside another, making max h/w
-*/
 (function ($){
 
 	$.fn.fluidFixed = function (opts){
