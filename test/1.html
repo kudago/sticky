@@ -1,0 +1,37 @@
+<meta charset="utf-8">
+<style type="text/css">
+.side-column{
+	outline: 1px solid red;
+	width: 200px;
+	float: left;
+	height: 400px;
+}
+.main-column{
+	outline: 1px solid blue;
+	height: 1800px;
+	overflow: hidden;
+	margin-left: 200px;
+	margin-bottom: 800px;
+}
+</style>
+
+<h1>Simple side column test</h1>
+
+<div class="side-column">
+Side column
+</div>
+
+<div class="main-column">
+Main column</div>
+
+<script src="../js/zepto.js"></script>
+<script src="../src/utils.js"></script>
+<script src="../src/monitor.js"></script>
+<script src="../src/sticky.js"></script>
+<script src="../src/jquery.fluid-fixed.js"></script>
+<script type="text/javascript">
+	var sticker = new Sticky(document.querySelector(".side-column"), {
+		restrictWithin: document.querySelector(".main-column"),
+		offset: 10
+	});
+</script>
