@@ -73,10 +73,9 @@ var cssPrefix = detectCSSPrefix(),
 
 
 function offsetTop(el){
-	var top = 0;
-	top = el.offsetTop;
-	while ((el = el.offsetParent)) {
-		top += el.offsetTop;
-	}
+	var top = 0,
+		rect = el.getBoundingClientRect();
+	top = rect.top + (window.pageYOffset || document.documentElement.scrollTop);
+
 	return top;
 }

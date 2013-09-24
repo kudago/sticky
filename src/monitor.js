@@ -19,31 +19,28 @@ Monitor.prototype = {
 		this.stickies = [];
 
 		//bind methods
-		this._update = this._update.bind(this);
-		this.update = this.update.bind(this);
+		this._scroll = this._scroll.bind(this);
+		this.scroll = this.scroll.bind(this);
+		this.resize = this.resize.bind(this);
 
 		this.bindObservers();
 	},
 
 	bindObservers: function(){
 		var self = this;
-		window.addEventListener("resize", function(e){
-			console.log("resize")
-			self.vp.height = window.innerHeight
-		})
+		window.addEventListener("resize", this.resize)
 
-		window.addEventListener("scroll", this._update)
+		window.addEventListener("scroll", this._scroll)
 	},
 
-	//throttles real recalc
-	update: function(){
-		console.log("recalc")
-		clearTimeout(this._updateInterval);
-		this._updateInterval = setTimeout(this._update, this.options.throttle);
+	//throttles check of
+	scroll: function(){
+		clearTimeout(this._scrollInterval);
+		this._scrollInterval = setTimeout(this._scroll, this.options.throttle);
 	},
 
-	_updateInterval: 0,
-	_update: function(){
+	_scrollInterval: 0,
+	_scroll: function(){
 		this.vp.top = window.pageYOffset || document.documentElement.scrollTop;
 
 		for (var i = 0; i < this.stickies.length; i++){
@@ -51,10 +48,18 @@ Monitor.prototype = {
 		}
 	},
 
+	//update size
+	resize: function(){
+		this.vp.height = window.innerHeight;
+		for (var i = 0; i < this.stickies.length; i++){
+			this.stickies[i].recalc();
+		}
+	},
+
 	//appends new sticker to the observable set
 	add: function(sticker){
 		this.stickies.push(sticker)
-		this.update();
+		this.scroll();
 		return sticker
 	}
 }

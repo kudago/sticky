@@ -35,7 +35,7 @@ Sticky.prototype = {
 		//stub is a spacer filling space when element is stuck
 		this.stub = this.el.cloneNode();
 		//this.stub.style.opacity = 0;
-		//this.stub.style.visibility = "hidden";
+		this.stub.style.visibility = "hidden";
 
 		//ensure parent's container relative coordinates
 		var pStyle = window.getComputedStyle(this.el.parentNode);
@@ -57,15 +57,13 @@ Sticky.prototype = {
 
 		if (this.isFixed){
 			if (!this.isBottom && vpTop + this.options.offset < this.restrictBox.top){
-				//check top stick needed
+				//check top unfix needed
 				this.unstick();
 				this.isTop = true;
-				console.log("sticktop")
 			} else if (vpTop + this.options.offset + this.height > this.restrictBox.bottom){
-				//check bottom stick needed
+				//check bottom unfix needed
 				this.unstick();
 				this.isBottom = true;
-				console.log("stickvottom");
 				this.el.style.position = "absolute";
 				this.el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
 			}
@@ -74,11 +72,9 @@ Sticky.prototype = {
 				//check fringe violation from top
 				this.isTop = false;
 				this.stick();
-				console.log("freefromtop")
 			} else if (this.isBottom && vpTop + this.options.offset + this.height < this.restrictBox.bottom) {
 				//check fringe violation from bottom
 				this.isBottom = false;
-				console.log("freefrombottom");
 				this.stick();
 			}
 		}
@@ -120,7 +116,8 @@ Sticky.prototype = {
 			//case of parent container
 			if (this.isFixed){
 				this.restrictBox.top = offsetTop(this.stub)
-				this.restrictBox.bottom = this.parent.height + offsetTop(this.stub);
+				this.restrictBox.bottom = this.parent.height + this.parent.top;
+				console.log("fixed")
 			} else {
 				this.restrictBox.top = offsetTop(this.el)
 				this.restrictBox.bottom = this.parent.height + this.parent.top;
@@ -129,7 +126,6 @@ Sticky.prototype = {
 
 		//update self size & position
 		this.height = this.el.offsetHeight;
-		console.log(this.restrictBox)
 	}
 
 }
