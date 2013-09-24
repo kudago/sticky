@@ -3,19 +3,31 @@ function Sticky(){
 	this.create.apply(this, arguments);
 }
 
+//modes of placing mutual items
+Sticky.MODE = {
+	NONE: 0,
+	STACKED: 1,
+	MUTUALLY_EXCLUSIVE: 2
+}
+
 Sticky.prototype = {
 	options: {
-		offset: 0,
+		offset: 50,
 		restrictWithin: null, //element or bounding box
 		vAlign: 'top',
 		stickyClass: "is-stuck",
-		stubClass: "sticky-stub"
+		stubClass: "sticky-stub",
+		mode: Sticky.MODE.MUTUALLY_EXCLUSIVE
 	},
 
 	create: function(el, options){
 		this.el = el;
 
 		this.options = extend({}, this.options, options);
+
+		//hook monitor
+		this.monitor = StickyMonitor;
+		this.monitor.add(this);
 
 		//init vars
 		this.isFixed = false;
@@ -33,6 +45,19 @@ Sticky.prototype = {
 			height: 0
 		}
 
+		//Find stickies siblings within the container
+		var prevEl = this.el;
+		while ((prevEl = prevEl.previousSibling) !== null){
+			if (prevEl.stickyId !== undefined){
+				this.prevSticky = this.monitor.stickies[prevEl.stickyId];
+				this.prevSticky.nextSticky = this;
+				//console.log("found " + prevEl.stickyId)
+				this.prevSticky.recalc();
+				break;
+			}
+		}
+
+
 		//stub is a spacer filling space when element is stuck
 		this.stub = this.el.cloneNode(true);
 		this.stub.classList.add(this.options.stubClass);
@@ -42,10 +67,6 @@ Sticky.prototype = {
 		//ensure parent's container relative coordinates
 		var pStyle = window.getComputedStyle(this.el.parentNode);
 		if (pStyle.position == "static") this.el.parentNode.style.position = "relative"; 
-
-		//hook monitor
-		this.monitor = StickyMonitor;
-		this.monitor.add(this);
 
 		//create spacer-stub
 		this.spacer = this.el.cloneNode();//document.createElement("div");
@@ -107,6 +128,8 @@ Sticky.prototype = {
 	//count offset borders, container sizes. Detect needed container size
 	recalc: function(){
 		//save basic element style
+		console.log(this.el.stickyId)
+		console.log(this.restrictBox)
 
 		//update parent container size & offsets
 		this.parent.top = offsetTop(this.el.parentNode);
@@ -126,6 +149,11 @@ Sticky.prototype = {
 			} else {
 				this.restrictBox.top = offsetTop(this.el)
 				this.restrictBox.bottom = this.parent.height + this.parent.top;
+			}
+			
+			//make restriction up to next sibling within one container
+			if (this.prevSticky && this.options.mode === Sticky.MODE.MUTUALLY_EXCLUSIVE){
+				this.prevSticky.restrictBox.bottom = this.restrictBox.top;			
 			}
 		}
 

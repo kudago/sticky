@@ -56,11 +56,12 @@ Monitor.prototype = {
 		}
 	},
 
-	//appends new sticker to the observable set
-	add: function(sticker){
-		this.stickies.push(sticker)
+	//appends new sticker to the observable set: called by stickers primarily
+	add: function(sticky){
+		this.stickies.push(sticky)
+		sticky.el.stickyId = this.stickies.length - 1;
 		this.scroll();
-		return sticker
+		return sticky
 	}
 }
 
