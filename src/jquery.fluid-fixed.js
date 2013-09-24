@@ -1,11 +1,11 @@
 //jquery-plugin
 if ($){
 	$.fn[pluginName] = function (arg) {
-		var $el = $(this),
-			instance = new Sticky($el[0], arg);
-		$el.data(pluginName, null);
-		$el.data(pluginName, instance);
-		return instance;
+		return this.each(function(i,e){
+			var $e = $(e);
+			var instance = new Sticky($e[0], arg);
+			$e.data(pluginName, instance);
+		})
 	};
 
 	$.Sticky = Sticky;

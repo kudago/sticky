@@ -8,7 +8,8 @@ Sticky.prototype = {
 		offset: 0,
 		restrictWithin: null, //element or bounding box
 		vAlign: 'top',
-		stickyClass: "is-stuck"
+		stickyClass: "is-stuck",
+		stubClass: "sticky-stub"
 	},
 
 	create: function(el, options){
@@ -33,7 +34,8 @@ Sticky.prototype = {
 		}
 
 		//stub is a spacer filling space when element is stuck
-		this.stub = this.el.cloneNode();
+		this.stub = this.el.cloneNode(true);
+		this.stub.classList.add(this.options.stubClass);
 		//this.stub.style.opacity = 0;
 		this.stub.style.visibility = "hidden";
 
@@ -62,7 +64,7 @@ Sticky.prototype = {
 				this.isTop = true;
 			} else if (vpTop + this.options.offset + this.height > this.restrictBox.bottom){
 				//check bottom unfix needed
-				this.unstick();
+				this.unstick(true);
 				this.isBottom = true;
 				this.el.style.position = "absolute";
 				this.el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
@@ -82,9 +84,12 @@ Sticky.prototype = {
 
 	//sticking inner routines
 	//when boundary reached
-	unstick: function(){
-		this.stub = this.el.parentNode.removeChild(this.stub);
-		this.isFixed = false;
+	unstick: function(preserveStub){
+		this.isFixed = false;		
+		if (!preserveStub) {
+			this.stub = this.el.parentNode.removeChild(this.stub);
+			this.clearMimicStyle();
+		}
 		this.el.style.position = "";
 		this.el.classList.remove(this.options.stickyClass);
 
@@ -96,6 +101,7 @@ Sticky.prototype = {
 		this.el.style.top = this.options.offset + "px";
 		this.el.classList.add(this.options.stickyClass);
 		this.el.parentNode.insertBefore(this.stub, this.el);
+		this.mimicStubStyle();
 	},
 
 	//count offset borders, container sizes. Detect needed container size
@@ -115,17 +121,31 @@ Sticky.prototype = {
 		} else {
 			//case of parent container
 			if (this.isFixed){
-				this.restrictBox.top = offsetTop(this.stub)
+				this.restrictBox.top = offsetTop(this.stub);
 				this.restrictBox.bottom = this.parent.height + this.parent.top;
-				console.log("fixed")
 			} else {
 				this.restrictBox.top = offsetTop(this.el)
 				this.restrictBox.bottom = this.parent.height + this.parent.top;
 			}
 		}
 
+		if (this.isFixed){
+			this.mimicStubStyle();
+		} else {
+			this.clearMimicStyle();
+		}
+
 		//update self size & position
 		this.height = this.el.offsetHeight;
+	},
+
+	mimicStubStyle: function(){
+		var stubStyle = getComputedStyle(this.stub)
+		this.el.style.width	= stubStyle.width;
+	},
+
+	clearMimicStyle: function(){
+		this.el.style.cssText = "";
 	}
 
 }

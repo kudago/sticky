@@ -64,11 +64,9 @@ var cssPrefix = detectCSSPrefix(),
 //#ifdef pluginName && pickerClass && className && altPickerClass
 	/* #put "pluginName = '" + pluginName + "'," */
 	/* #put "className = '" + className + "'" */
-	/* #put "pickerClass = '" + pickerClass + "'" */
 //#else
-	pluginName = "slideArea",
-	className = "slide-area",
-	pickerClass = "slide-area-picker"
+	pluginName = "sticky",
+	className = "sticky"
 //#endif
 
 
