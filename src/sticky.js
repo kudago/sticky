@@ -17,7 +17,7 @@ Sticky.prototype = {
 		vAlign: 'top',
 		stickyClass: "is-stuck",
 		stubClass: "sticky-stub",
-		mode: Sticky.MODE.MUTUALLY_EXCLUSIVE
+		mode: Sticky.MODE.STACKED
 	},
 
 	create: function(el, options){
@@ -157,10 +157,17 @@ Sticky.prototype = {
 			}
 		}
 
+		//adjust style
 		if (this.isFixed){
 			this.mimicStubStyle();
 		} else {
 			this.clearMimicStyle();
+		}
+
+		//make offsets for stacked mode
+		if (this.prevSticky){
+			console.log("found")
+			this.options.offset = this.prevSticky.options.offset + this.prevSticky.el.offsetHeight;
 		}
 
 		//update self size & position
