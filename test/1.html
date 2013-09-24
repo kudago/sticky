@@ -1,5 +1,8 @@
 <meta charset="utf-8">
 <style type="text/css">
+body{
+	padding-top: 50px;
+}
 .side-column{
 	outline: 1px solid red;
 	width: 200px;
@@ -30,8 +33,5 @@ Main column</div>
 <script src="../src/sticky.js"></script>
 <script src="../src/jquery.fluid-fixed.js"></script>
 <script type="text/javascript">
-	var sticker = new Sticky(document.querySelector(".side-column"), {
-		restrictWithin: document.querySelector(".main-column"),
-		offset: 10
-	});
+	var sticker = new Sticky(document.querySelector(".side-column"));
 </script>
