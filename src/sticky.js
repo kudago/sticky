@@ -23,7 +23,13 @@ Sticky.prototype = {
 	create: function(el, options){
 		this.el = el;
 
-		this.options = extend({}, this.options, options);
+		//recognize attributes
+		var parsedData = parseDataAttributes(this.el);
+		if ( typeof parsedData.restrictWithin === "string" ){
+			parsedData.restrictWithin = document.body.querySelector(parsedData.restrictWithin);
+		}
+
+		this.options = extend({}, this.options, parsedData, options);
 
 		//hook monitor
 		this.monitor = StickyMonitor;
@@ -52,11 +58,9 @@ Sticky.prototype = {
 				this.prevSticky = this.monitor.stickies[prevEl.stickyId];
 				this.prevSticky.nextSticky = this;
 				//console.log("found " + prevEl.stickyId)
-				this.prevSticky.recalc();
 				break;
 			}
 		}
-
 
 		//stub is a spacer filling space when element is stuck
 		this.stub = this.el.cloneNode(true);
@@ -127,10 +131,7 @@ Sticky.prototype = {
 
 	//count offset borders, container sizes. Detect needed container size
 	recalc: function(){
-		//save basic element style
-		console.log(this.el.stickyId)
-		console.log(this.restrictBox)
-
+		//console.group("recalc")
 		//update parent container size & offsets
 		this.parent.top = offsetTop(this.el.parentNode);
 		this.parent.height = this.el.parentNode.offsetHeight;
@@ -164,14 +165,23 @@ Sticky.prototype = {
 			this.clearMimicStyle();
 		}
 
-		//make offsets for stacked mode
-		if (this.prevSticky){
-			console.log("found")
-			this.options.offset = this.prevSticky.options.offset + this.prevSticky.el.offsetHeight;
-		}
-
 		//update self size & position
 		this.height = this.el.offsetHeight;
+
+		//make offsets for stacked mode
+		if (this.options.mode === Sticky.MODE.STACKED){
+			if (this.prevSticky){
+				this.options.offset = this.prevSticky.options.offset + this.prevSticky.el.offsetHeight;
+				var prevEl = this;
+				while((prevEl = prevEl.prevSticky)){
+					prevEl.restrictBox.bottom -= this.height;
+					if (this.restrictBox.top < this.prevSticky.restrictBox.top + this.prevSticky.height ) this.restrictBox.top += prevEl.height;
+				}
+			}
+		}
+
+		//console.log(this.prevSticky && this.prevSticky.restrictBox);
+		//console.groupEnd();
 	},
 
 	mimicStubStyle: function(){

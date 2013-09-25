@@ -6,6 +6,7 @@ body{
 }
 .sticky{
 	outline: 1px solid red;
+	background: rgba(255,255,255,1);
 }
 .side-column{	
 	width: 200px;
@@ -13,7 +14,7 @@ body{
 	height: 400px;
 }
 .side-column .sticky{
-	min-height: 300px;
+	min-height: 100px;
 }
 .main-column{
 	outline: 1px solid blue;
@@ -28,9 +29,9 @@ body{
 
 
 <div class="side-column">
-	<div class="">Side stacked 1</div>
-	<div class="">Side stacked 2</div>
-	<div class="">Side stacked 3</div>
+	<div class="sticky" data-restrict-within=".main-column">Side stacked 1</div>
+	<div class="sticky" data-restrict-within=".main-column">Side stacked 2</div>
+	<div class="sticky" data-restrict-within=".main-column">Side stacked 3</div>
 </div>
 
 <div class="main-column">
@@ -46,6 +47,14 @@ body{
 	<p>Etiam porta sem malesuada magna mollis euismod. Donec id elit non mi porta gravida at eget metus. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Curabitur blandit tempus porttitor.
 
 	Sed posuere consectetur est at lobortis. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor.</p>
+	<div class="sticky">Last sticky</div>
+	<p>Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Vestibulum id ligula porta felis euismod semper. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Donec sed odio dui. Nullam id dolor id nibh ultricies vehicula ut id elit.
+
+	Donec ullamcorper nulla non metus auctor fringilla. Etiam porta sem malesuada magna mollis euismod. Maecenas sed diam eget risus varius blandit sit amet non magna. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Cras mattis consectetur purus sit amet fermentum.
+
+	Etiam porta sem malesuada magna mollis euismod. Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Etiam porta sem malesuada magna mollis euismod. Nullam quis risus eget urna mollis ornare vel eu leo.
+
+	Sed posuere consectetur est at lobortis. Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Nullam quis risus eget urna mollis ornare vel eu leo. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit.</p>
 </div>
 
 <script src="../js/zepto.js"></script>
