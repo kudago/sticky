@@ -54,8 +54,10 @@ Sticky.prototype = {
 		this.options = extend({}, this.options, el.dataset, options);
 
 		//query selector
-		if ( typeof this.options.restrictWithin === "string" ){
-			this.options.restrictWithin = document.body.querySelector(this.options.restrictWithin);			
+		if ( typeof this.options["restrictWithin"] === "string" ){
+			this.restrictWithin = document.body.querySelector(this.options["restrictWithin"]);			
+		} else {
+			this.restrictWithin = this.options["restrictWithin"];
 		}
 
 		//cast offset type
@@ -113,22 +115,22 @@ Sticky.prototype = {
 		//bind methods
 		this.check = this.check.bind(this);
 		this.recalc = this.recalc.bind(this);
+		this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
 
 		this.recalc();
-		this.check();
 
 		//bind events
 		document.addEventListener("scroll", this.check);
-		window.addEventListener("resize", function(){ this.recalc(); this.check(); }.bind(this));
+		window.addEventListener("resize", this.recalc);
 
 		//API events
-		document.addEventListener("sticky:recalc", self.recalc);
+		document.addEventListener("sticky:recalc", this.recalc);
 	},
 
 	//changing state necessity checker
 	check: function(){
 		var vpTop = window.pageYOffset || document.documentElement.scrollTop;
-		//console.log(this.isFixed)
+		//console.log("check:" + this.el.stickyId, "isFixed:" + this.isFixed, this.restrictBox)
 		if (this.isFixed){
 			if (!this.isTop && vpTop + this.options.offset + this.height >= this.restrictBox.bottom){
 				//check bottom parking needed
@@ -228,7 +230,7 @@ Sticky.prototype = {
 	recalc: function(){
 		//console.group("recalc:" + this.el.stickyId)
 
-		var measureEl = (this.isFixed ? this.stub : this.el);
+		var measureEl = (this.isTop ? this.el : this.stub);
 
 		//update parent container size & offsets
 		this.parent = getBoundingOffsetRect(measureEl.parentNode)
@@ -237,13 +239,13 @@ Sticky.prototype = {
 		this.height = measureEl.offsetHeight;
 
 		//update restrictions
-		if (this.options.restrictWithin instanceof Element){
-			var offsetRect = getBoundingOffsetRect(this.options.restrictWithin)
+		if (this.restrictWithin instanceof Element){
+			var offsetRect = getBoundingOffsetRect(this.restrictWithin)
 			this.restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
 			//console.log(getBoundingOffsetRect(this.stub))
-			this.restrictBox.bottom = this.options.restrictWithin.offsetHeight + offsetRect.top;
-		} else if (this.options.restrictWithin instanceof Object) {
-			this.restrictBox = this.options.restrictWithin;
+			this.restrictBox.bottom = this.restrictWithin.offsetHeight + offsetRect.top;
+		} else if (this.restrictWithin instanceof Object) {
+			this.restrictBox = this.restrictWithin;
 		} else {
 			//case of parent container
 			this.restrictBox.top = getBoundingOffsetRect(measureEl).top;
@@ -256,28 +258,33 @@ Sticky.prototype = {
 		}
 
 		//make offsets for stacked mode
-		if (this.options.mode === "stacked"){
-			if (this.prevSticky){
-				var prevMeasurer = this.prevSticky.isFixed ? this.prevSticky.stub : this.prevSticky.el;
-				this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
-				var prevEl = this;
-				while((prevEl = prevEl.prevSticky)){
-					prevEl.restrictBox.bottom -= this.height;
-				}
+		if (this.prevSticky && this.options.mode === "stacked"){
+			var prevMeasurer = (this.prevSticky.isTop ? this.prevSticky.el : this.prevSticky.stub);
+			this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
+			var prevEl = this;
+			while((prevEl = prevEl.prevSticky)){
+				prevEl.restrictBox.bottom -= this.height;
 			}
 		}
-
-		//adjust style
-		//TODO: think of replacing with check();
-		if (this.isFixed){
-			this.mimicStyle(this.el, this.stub);
-		} else {
-			this.clearMimicStyle();
-		}
+		
+		clearTimeout(this._updTimeout);
+		this._updTimeout = setTimeout(this.adjustSizeAndPosition, 0);
 
 		//console.log(this.restrictBox);
 		//console.log(this.prevSticky && this.prevSticky.restrictBox)
 		//console.groupEnd();
+	},
+
+	adjustSizeAndPosition: function(){
+		if (this.isTop){
+			this.clearMimicStyle();
+		} else if (this.isBottom){
+			this.makeParkedBottomStyle(this.el);
+		} else {
+			this.makeStickedStyle(this.el);
+		}
+
+		this.check();
 	},
 
 	_directions: ["left", "top", "right", "bottom"],

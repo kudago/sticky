@@ -20,7 +20,22 @@ body{
 	outline: 1px solid blue;
 	overflow: hidden;
 	margin-left: 200px;
-	margin-bottom: 800px;
+	margin-bottom: 100px;
+}
+.recalc{
+	position: fixed;
+	background: black;
+	color: white;
+	right: 10px;
+	top: 50%;
+	width: 40px;
+	height: 40px;
+	margin-top: -20px;
+	cursor: pointer;
+	text-align: center;
+	line-height: 40px;
+	font-size: 28px;
+	border-radius: 4px;
 }
 </style>
 
@@ -29,9 +44,9 @@ body{
 
 
 <div class="side-column">
-	<div class="sticky" data-restrict-within=".main-column" data-mode="stacked" data-offset="10">Side stacked 1</div>
-	<div class="sticky" data-restrict-within=".main-column" data-mode="stacked" data-offset="20">Side stacked 2</div>
-	<div class="sticky" data-restrict-within=".main-column" data-mode="stacked">Side stacked 3</div>
+	<div class="sticky" data-restrict-within=".main-column" data-mode="stacked" data-offset="0">Side stacked 0</div>
+	<div class="sticky" data-restrict-within=".main-column" data-mode="stacked" data-offset="0">Side stacked 1</div>
+	<div class="sticky" data-restrict-within=".main-column" data-mode="stacked">Side stacked 2</div>
 </div>
 
 <div class="main-column">
@@ -57,16 +72,19 @@ body{
 	Sed posuere consectetur est at lobortis. Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Nullam quis risus eget urna mollis ornare vel eu leo. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit.</p>
 </div>
 
-<button id="API">Add nodes & recalc</button>
+<div class="recalc" title="recalc">❄</div>
 
 <script src="../js/zepto.js"></script>
 
-<script src="../src/utils.js"></script>
+<!--<script src="../src/utils.js"></script>
 <script src="../src/sticky.js"></script>
-<script src="../src/jquery.sticky.js"></script>
-<!--<script type="text/javascript" src="../sticky.min.js"></script>-->
+<script src="../src/jquery.sticky.js"></script>-->
+<script type="text/javascript" src="../sticky.min.js"></script>
 <script type="text/javascript">
 	$(".sticky").sticky();
-	window.start = Date.now()
+
+	$(".recalc").click(function(){
+		$(document).trigger("sticky:recalc");
+	})
 
 </script>
