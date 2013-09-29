@@ -1,8 +1,9 @@
 # Sticky.js
 
-Carefully makes sticky elements. Sticky elements - ones become fixed being scrolled on.
-Supports all features of [sticky-kit.js](https://github.com/leafo/sticky-kit) and [sticky.js](https://github.com/garand/sticky), but 
-implements corre
+Makes elements sticky*.
+
+Supports all features of [sticky-kit.js](https://github.com/leafo/sticky-kit) and [sticky.js](https://github.com/garand/sticky), and 
+implements extra features:
 
 * Sticky modes: stacked/mutually exclusive.
 * Any restricting containers possible, not only parent ones.
@@ -10,6 +11,8 @@ implements corre
 * Extremely enhanced performance, browser repaintings reduced to minimum (one per stick/unstick action).
 * Careful treatment of element's style, like absolute/relative position, floating etc.
 * Keep correct work on resizing.
+
+*Sticky elements — ones become fixed being scrolled on.
 
 ## Use
 
