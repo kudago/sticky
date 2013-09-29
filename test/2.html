@@ -24,19 +24,29 @@ body{
 }
 </style>
 
-<h1>Simple side column test</h1>
+<h1>Mutually exclusive mode test</h1>
 
 
 
 <div class="side-column">
-	<div class="sticky" data-restrict-within=".main-column">Side stacked 1</div>
-	<div class="sticky" data-restrict-within=".main-column">Side stacked 2</div>
-	<div class="sticky" data-restrict-within=".main-column">Side stacked 3</div>
+	<div class="sticky" data-restrict-within=".main-column">Side 1</div>
+	<div class="sticky" data-restrict-within=".main-column">Side 2</div>
+	<div class="sticky" data-restrict-within=".main-column">Side 3</div>
 </div>
 
 <div class="main-column">
-	<div class="sticky">Sticky header</div>
+	<div class="sticky" data-offset="0">Sticky header</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
+	<div class="sticky">Another sticky</div>
+	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
+	<p>Cras mattis consectetur purus sit amet fermentum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus mollis interdum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam quis risus eget urna mollis ornare vel eu leo. Curabitur blandit tempus porttitor. Donec id elit non mi porta gravida at eget metus.
+
+	Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Donec sed odio dui. Maecenas faucibus mollis interdum. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.</p>
+	<div class="sticky">Another sticky</div>
+
+	<p>Etiam porta sem malesuada magna mollis euismod. Donec id elit non mi porta gravida at eget metus. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Curabitur blandit tempus porttitor.
+
+	Sed posuere consectetur est at lobortis. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor.</p>
 	<div class="sticky">Another sticky</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
 	<p>Cras mattis consectetur purus sit amet fermentum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus mollis interdum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam quis risus eget urna mollis ornare vel eu leo. Curabitur blandit tempus porttitor. Donec id elit non mi porta gravida at eget metus.
@@ -62,6 +72,7 @@ body{
 <script src="../src/monitor.js"></script>
 <script src="../src/sticky.js"></script>
 <script src="../src/jquery.sticky.js"></script>
+<!--<script type="text/javascript" src="../sticky.js"></script>-->
 <script type="text/javascript">
 	$(".sticky").sticky();
 </script>

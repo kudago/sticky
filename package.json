@@ -1,12 +1,44 @@
 {
-	"name": "fluid-fixed",
-	"version": "0.1.0",
-	"devDependencies": {
-		"grunt": "~0.4.1",
-		"grunt-contrib-jshint": "~0.6.4",
-		"grunt-contrib-qunit": "~0.2.2",
-		"grunt-contrib-concat": "~0.2.0",
-		"grunt-contrib-uglify": "~0.2.4",
-		"grunt-homemade": "~0.2.0"
-	}
+  "name": "sticky",
+  "version": "0.1.0",
+  "description": "Full-featured sticky-kit with stacking/exclusive modes of sticking, absence of jquery dependency and extremely enhanced performance.",
+  "homepage": "https://github.com/dfcreative/sticky",
+  "author": {
+    "name": "Dmitry Ivanov",
+    "email": "df.creative@gmail.com",
+    "url": "dfcreative.github.io"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/dfcreative/sticky.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dfcreative/sticky/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/dfcreative/sticky/blob/master/LICENSE-MIT"
+    }
+  ],
+  "main": "Gruntfile.js",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.4",
+    "grunt-contrib-qunit": "~0.2.2",
+    "grunt-contrib-concat": "~0.2.0",
+    "grunt-contrib-uglify": "~0.2.4",
+    "grunt-homemade": "~0.2.1"
+  },
+  "peerDependencies": {
+    "grunt": "~0.4.1"
+  },
+  "keywords": [
+    "gruntplugin"
+  ]
+
+
 }

@@ -12,12 +12,12 @@ Sticky.MODE = {
 
 Sticky.prototype = {
 	options: {
-		offset: 50,
+		offset: 0,
 		restrictWithin: null, //element or bounding box
 		vAlign: 'top',
 		stickyClass: "is-stuck",
 		stubClass: "sticky-stub",
-		mode: Sticky.MODE.STACKED
+		mode: Sticky.MODE.MUTUALLY_EXCLUSIVE
 	},
 
 	create: function(el, options){
@@ -25,12 +25,24 @@ Sticky.prototype = {
 
 		//recognize attributes
 		var parsedData = parseDataAttributes(this.el);
+
 		if ( typeof parsedData.restrictWithin === "string" ){
-			parsedData.restrictWithin = document.body.querySelector(parsedData.restrictWithin);
+			parsedData.restrictWithin = document.body.querySelector(parsedData.restrictWithin);			
 		}
 
 		this.options = extend({}, this.options, parsedData, options);
 
+		//translate mode to number
+		if (typeof this.options.mode === "string"){
+			if (this.options.mode == "stacked"){
+				this.options.mode = Sticky.MODE.STACKED
+			} else if (this.options.mode == "exclusive"){
+				this.options.mode = Sticky.MODE.MUTUALLY_EXCLUSIVE
+			} else {
+				this.options.mode = Sticky.MODE.NONE
+			}
+		}
+		
 		//hook monitor
 		this.monitor = StickyMonitor;
 		this.monitor.add(this);
@@ -38,7 +50,7 @@ Sticky.prototype = {
 		//init vars
 		this.isFixed = false;
 		this.isBottom = false;
-		this.isTop = false;
+		this.isTop = true;
 		this.restrictBox = {
 			top: 0,
 			bottom: 9999
@@ -65,132 +77,207 @@ Sticky.prototype = {
 		//stub is a spacer filling space when element is stuck
 		this.stub = this.el.cloneNode(true);
 		this.stub.classList.add(this.options.stubClass);
-		//this.stub.style.opacity = 0;
 		this.stub.style.visibility = "hidden";
+
+		//save initial inline style
+		this.initialStyle = this.el.style.cssText;
+
+		//visual stub needed for smooth rendering of switch
+		this.stub2 = this.el.cloneNode(true);		
+
+		//fast replacer
+		this.stubs = document.createDocumentFragment();
 
 		//ensure parent's container relative coordinates
 		var pStyle = window.getComputedStyle(this.el.parentNode);
-		if (pStyle.position == "static") this.el.parentNode.style.position = "relative"; 
+		if (pStyle.position == "static") this.el.parentNode.style.position = "relative";
 
-		//create spacer-stub
-		this.spacer = this.el.cloneNode();//document.createElement("div");
+		//bind to scroll (fasten than monitor cycle)
+		this.check = this.check.bind(this);
+		this.recalc = this.recalc.bind(this);
+		document.addEventListener("scroll", this.check);
+		window.addEventListener("resize", function(){ this.recalc(); this.check(); }.bind(this));
 
 		this.recalc();
+		this.initFlags();
+		this.check();
+	},
+
+	initFlags: function(){
+		var offset = getBoundingOffsetRect(this.el);
+		if (offset.top < this.restrictBox.top) {
+			this.parkTop();
+		} else if (offset.top + offset.height > this.restrictBox.bottom){
+			this.parkBottom();
+		} else {
+			this.stick();
+		}
 	},
 
 	//changing state necessity checker
 	check: function(){
 		var vpTop = this.monitor.vp.top
-
 		if (this.isFixed){
-			if (!this.isBottom && vpTop + this.options.offset < this.restrictBox.top){
-				//check top unfix needed
-				this.unstick();
-				this.isTop = true;
-			} else if (vpTop + this.options.offset + this.height > this.restrictBox.bottom){
-				//check bottom unfix needed
-				this.unstick(true);
-				this.isBottom = true;
-				this.el.style.position = "absolute";
-				this.el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
+			if (!this.isTop && vpTop + this.options.offset + this.height >= this.restrictBox.bottom){
+				//check bottom parking needed
+				this.parkBottom();
+			}
+			if (!this.isBottom && vpTop + this.options.offset <= this.restrictBox.top){
+				//check top parking needed
+				this.parkTop();
 			}
 		} else {
-			if (vpTop + this.options.offset > this.restrictBox.top && !this.isBottom){
-				//check fringe violation from top
-				this.isTop = false;
-				this.stick();
-			} else if (this.isBottom && vpTop + this.options.offset + this.height < this.restrictBox.bottom) {
-				//check fringe violation from bottom
-				this.isBottom = false;
+			if ((this.isTop || this.isBottom)
+				&& vpTop + this.options.offset > this.restrictBox.top
+				&& vpTop + this.options.offset + this.height < this.restrictBox.bottom){
+				//check fringe violation from top or bottom
 				this.stick();
 			}
 		}
 	},
 
 	//sticking inner routines
-	//when boundary reached
-	unstick: function(preserveStub){
-		this.isFixed = false;		
-		if (!preserveStub) {
-			this.stub = this.el.parentNode.removeChild(this.stub);
-			this.clearMimicStyle();
-		}
-		this.el.style.position = "";
+	//when park top needed
+	parkTop: function(){
+		this.isFixed = false;
+		this.isTop = true;
+		this.isBottom = false;
+		this.stub = this.el.parentNode.removeChild(this.stub);
+		this.clearMimicStyle();
 		this.el.classList.remove(this.options.stickyClass);
-
+		//#if DEV
+		console.log("parkTop")
+		//#endif
 	},
 	//to make fixed
+	//enhanced replace: faked visual stub is fastly replaced with natural one
 	stick: function(){
+		if (!this.isBottom) {
+			//if violating from the top
+			this.prepareStubs(this.stub, this.stub2);
+		} else {
+			//if violating from the bottom
+			this.prepareStubs(this.stub2);
+		}
+		this.makeStickedStyle(this.stub2);
+
+		this.el = this.el.parentNode.replaceChild(this.stubs, this.el);
+		this.makeStickedStyle(this.el);
+		this.stub2 = this.stub.parentNode.replaceChild(this.el, this.stub2);
+
 		this.isFixed = true;
-		this.el.style.position = "fixed";
-		this.el.style.top = this.options.offset + "px";
-		this.el.classList.add(this.options.stickyClass);
-		this.el.parentNode.insertBefore(this.stub, this.el);
-		this.mimicStubStyle();
+		this.isTop = false;
+		this.isBottom = false;
+
+		//#if DEV
+		console.log("stick")
+		//#endif
+	},
+
+	//Stuffs stubs fragment
+	prepareStubs: function(){
+		for (var i = 0; i < arguments.length; i++){
+			this.stubs.appendChild(arguments[i])
+		}
+	},
+
+	//when bottom land needed
+	parkBottom: function(){
+		this.isFixed = false;
+		this.isBottom = true;
+		this.isTop = false;
+		this.el.classList.remove(this.options.stickyClass);
+		this.makeParkedBottomStyle(this.el);
+		//#if DEV
+		console.log("parkBottom")
+		//#endif
+	},
+
+	//set up style of element as it is parked at the bottom
+	makeParkedBottomStyle: function(el){
+		el.style.cssText = "";
+		el.style.position = "absolute";
+		el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
+		el.style.width = this.stub.offsetWidth + "px";
+	},
+
+	makeStickedStyle: function(el){
+		el.style.cssText = "";
+		el.style.position = "fixed";
+		el.style.top = this.options.offset + "px";
+		el.classList.add(this.options.stickyClass);
+		this.mimicStyle(el, this.stub);
 	},
 
 	//count offset borders, container sizes. Detect needed container size
 	recalc: function(){
-		//console.group("recalc")
+		//console.group("recalc:" + this.el.stickyId)
+
+		var measureEl = (this.isFixed ? this.stub : this.el);
+
 		//update parent container size & offsets
-		this.parent.top = offsetTop(this.el.parentNode);
-		this.parent.height = this.el.parentNode.offsetHeight;
+		this.parent = getBoundingOffsetRect(measureEl.parentNode)
+
+		//update self size & position
+		this.height = measureEl.offsetHeight;
 
 		//update restrictions
 		if (this.options.restrictWithin instanceof Element){
-			this.restrictBox.top = offsetTop(this.options.restrictWithin);
-			this.restrictBox.bottom = this.options.restrictWithin.offsetHeight + this.restrictBox.top;
+			var offsetRect = getBoundingOffsetRect(this.options.restrictWithin)
+			this.restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
+			//console.log(getBoundingOffsetRect(this.stub))
+			this.restrictBox.bottom = this.options.restrictWithin.offsetHeight + offsetRect.top;
 		} else if (this.options.restrictWithin instanceof Object) {
-			this.restrictBox = this.options.restrictWithin
+			this.restrictBox = this.options.restrictWithin;
 		} else {
 			//case of parent container
-			if (this.isFixed){
-				this.restrictBox.top = offsetTop(this.stub);
-				this.restrictBox.bottom = this.parent.height + this.parent.top;
-			} else {
-				this.restrictBox.top = offsetTop(this.el)
-				this.restrictBox.bottom = this.parent.height + this.parent.top;
-			}
-			
-			//make restriction up to next sibling within one container
-			if (this.prevSticky && this.options.mode === Sticky.MODE.MUTUALLY_EXCLUSIVE){
-				this.prevSticky.restrictBox.bottom = this.restrictBox.top;			
+			this.restrictBox.top = getBoundingOffsetRect(measureEl).top;
+			this.restrictBox.bottom = this.parent.height + this.parent.top;
+		}
+
+		//make restriction up to next sibling within one container
+		if (this.prevSticky && this.options.mode === Sticky.MODE.MUTUALLY_EXCLUSIVE){
+			this.prevSticky.restrictBox.bottom = this.restrictBox.top;
+		}
+
+		//make offsets for stacked mode
+		if (this.options.mode === Sticky.MODE.STACKED){
+			if (this.prevSticky){
+				var prevMeasurer = this.prevSticky.isFixed ? this.prevSticky.stub : this.prevSticky.el;
+				this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
+				var prevEl = this;
+				while((prevEl = prevEl.prevSticky)){
+					prevEl.restrictBox.bottom -= this.height;
+				}
 			}
 		}
 
 		//adjust style
 		if (this.isFixed){
-			this.mimicStubStyle();
+			this.mimicStyle(this.el, this.stub);
 		} else {
 			this.clearMimicStyle();
-		}
+		}	
 
-		//update self size & position
-		this.height = this.el.offsetHeight;
-
-		//make offsets for stacked mode
-		if (this.options.mode === Sticky.MODE.STACKED){
-			if (this.prevSticky){
-				this.options.offset = this.prevSticky.options.offset + this.prevSticky.el.offsetHeight;
-				var prevEl = this;
-				while((prevEl = prevEl.prevSticky)){
-					prevEl.restrictBox.bottom -= this.height;
-					if (this.restrictBox.top < this.prevSticky.restrictBox.top + this.prevSticky.height ) this.restrictBox.top += prevEl.height;
-				}
-			}
-		}
-
-		//console.log(this.prevSticky && this.prevSticky.restrictBox);
+		//console.log(this.restrictBox);
+		//console.log(this.prevSticky && this.prevSticky.restrictBox)
 		//console.groupEnd();
 	},
 
-	mimicStubStyle: function(){
-		var stubStyle = getComputedStyle(this.stub)
-		this.el.style.width	= stubStyle.width;
+	mimicStyle: function(to, from){
+		var stubStyle = getComputedStyle(from),
+			stubOffset = getBoundingOffsetRect(from);
+		to.style.width = stubStyle.width;
+		if (stubStyle.left !== "auto"){
+			to.style.left = stubOffset.left + "px";
+		}
+		if (stubStyle.right !== "auto"){
+			to.style.right = stubOffset.right + "px";
+		}
 	},
 
 	clearMimicStyle: function(){
-		this.el.style.cssText = "";
+		this.el.style.cssText = this.initialStyle;
 	}
 
 }

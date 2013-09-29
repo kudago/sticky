@@ -7,11 +7,11 @@ module.exports = function(grunt) {
 		homemade: {
 			main:{
 				src: "build.js",
-				dest: "jquery.<%= pkg.name %>.js",
+				dest: "<%= pkg.name %>.js",
 				context: {
-					pluginName: "slideArea",
-					className: "slide-area",
-					env: null
+					pluginName: "sticky",
+					className: "sticky",
+					DEV: false
 				}
 			}
 		},
@@ -36,7 +36,7 @@ module.exports = function(grunt) {
 				separator: ';'
 			},
 			dist: {
-				src: ['src/utils.js', 'src/slide-area.js'],
+				src: ['src/utils.js', 'src/sticky.js'],
 				dest: '<%= pkg.name %>.js'
 			},
 		},
@@ -47,7 +47,7 @@ module.exports = function(grunt) {
 			},
 			dist: {
 				files: {
-					'jquery.<%= pkg.name %>.min.js': ['<%= homemade.main.dest %>']
+					'<%= pkg.name %>.min.js': ['<%= homemade.main.dest %>']
 				}
 			}
 		}
