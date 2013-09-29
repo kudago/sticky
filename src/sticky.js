@@ -195,9 +195,7 @@ Sticky.prototype = {
 		el.style.position = "absolute";
 		el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
 		this.mimicStyle(el, this.stub);
-		var stubStyle = getComputedStyle(this.stub);
-		el.style.right = stubStyle.right;
-		el.style.left = stubStyle.left;
+		el.style.left = this.stub.offsetLeft + "px";
 	},
 
 	makeStickedStyle: function(el, srcEl){
@@ -270,15 +268,18 @@ Sticky.prototype = {
 		//console.groupEnd();
 	},
 
+	_directions: ["left", "top", "right", "bottom"],
+	_mimicProperties: ["padding-", "border-"],
 	mimicStyle: function(to, from){
 		var stubStyle = getComputedStyle(from),
 			stubOffset = getBoundingOffsetRect(from);
-		to.style.width = stubStyle.width;
-		if (stubStyle.left !== "auto"){
-			to.style.left = stubOffset.left + "px";
-		}
-		if (stubStyle.right !== "auto"){
-			to.style.right = stubOffset.right + "px";
+		to.style.width = stubOffset.width + "px";
+		to.style.left = stubOffset.left + "px";
+		for (var i = 0; i < this._mimicProperties.length; i++){
+			for (var j = 0; j < this._directions.length; j++){
+				var prop = this._mimicProperties[i] + this._directions[j];
+				to.style[prop] = stubStyle[prop];
+			}
 		}
 	},
 
