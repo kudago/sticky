@@ -11,39 +11,12 @@ function extend(a){
 	return a;
 }
 
-//stupid prefix detector
-function detectCSSPrefix(){
-	var puppet = document.documentElement;
-	var style = document.defaultView.getComputedStyle(puppet, "");
-	if (style.transform) return "";
-	if (style["-webkit-transform"]) return "-webkit-";
-	if (style["-moz-transform"]) return "-moz-";
-	if (style["-o-transform"]) return "-o-";
-	if (style["-khtml-transform"]) return "-khtml-";
-	return "";
-}
-
-//simple math limiter
-function limit(v, min, max){
-	return Math.max(min, Math.min(max, v));
-}
-
 //attr parser
-function parseDataAttributes(el, multiple) {
+function parseDataAttributes(el) {
 	var data = {}, v;
 	for (var prop in el.dataset){
-		var v;
-		if (multiple) {
-			v = el.dataset[prop].split(",");
-			for (var i = v.length; i--;){
-				v[i] = recognizeValue(v[i].trim());
-				if (v[i] === "") v[i] = null;
-			}
-		} else {
-			v = recognizeValue(el.dataset[prop]);
-			if (v === "") v[i] = true;
-		}
-		
+		var v = recognizeValue(el.dataset[prop]);
+			if (v === "") v[i] = true;		
 		data[prop] = v;
 	}
 	return data;
@@ -51,11 +24,12 @@ function parseDataAttributes(el, multiple) {
 
 //returns value from string with correct type 
 function recognizeValue(str){
+	var v;
 	if (str === "true") {
 		return true;
 	} else if (str === "false") {
 		return false;
-	} else if (!Number.isNaN(v = parseFloat(str))) {
+	} else if (!isNaN(v = parseFloat(str))) {
 		return v;
 	} else {
 		return str;
@@ -69,19 +43,17 @@ function getBoundingOffsetRect(el){
 	c.left = rect.left + (window.pageXOffset || document.documentElement.scrollLeft);
 	c.width = el.offsetWidth;
 	c.height = el.offsetHeight;
-	c.right = window.innerWidth - rect.right;
-	c.bottom = rect.bottom + Math.max( document.body.scrollHeight, document.body.offsetHeight) - (window.innerHeight + (window.pageYOffset || document.documentElement.scrollTop))
+	c.right = document.width - rect.right;
+	c.bottom = (window.innerHeight + (window.pageYOffset || document.documentElement.scrollTop) - rect.bottom)
 
 	return c;
 }
 
-var cssPrefix = detectCSSPrefix(),
-pluginName = 'sticky',
-	className = 'sticky'
+var pluginName = 'sticky'
 
 
 
-className = 'sticky'
+
 	//observes scroll, resizing, changes of container size, ticks scroll, recalcs
 //singleton
 function Monitor(){
@@ -110,11 +82,10 @@ Monitor.prototype = {
 
 		this.bindObservers();
 
-		className = 'sticky'
+		
 	},
 
 	bindObservers: function(){
-		var self = this;
 		//general events
 		window.addEventListener("resize", this.resize);
 		document.addEventListener("scroll", this.check);
@@ -131,7 +102,7 @@ Monitor.prototype = {
 	},
 
 	_checkInterval: 0,*/
-	check: function(e){
+	check: function(){
 		this.vp.top = window.pageYOffset || document.documentElement.scrollTop;
 	},
 
@@ -258,7 +229,19 @@ Sticky.prototype = {
 		window.addEventListener("resize", function(){ this.recalc(); this.check(); }.bind(this));
 
 		this.recalc();
+		this.initFlags();
 		this.check();
+	},
+
+	initFlags: function(){
+		var offset = getBoundingOffsetRect(this.el);
+		if (offset.top < this.restrictBox.top) {
+			this.parkTop();
+		} else if (offset.top + offset.height > this.restrictBox.bottom){
+			this.parkBottom();
+		} else {
+			this.stick();
+		}
 	},
 
 	//changing state necessity checker
@@ -286,13 +269,14 @@ Sticky.prototype = {
 	//sticking inner routines
 	//when park top needed
 	parkTop: function(){
-		this.isFixed = false;
-		this.isTop = true;
-		this.isBottom = false;
 		this.stub = this.el.parentNode.removeChild(this.stub);
 		this.clearMimicStyle();
 		this.el.classList.remove(this.options.stickyClass);
-		className = 'sticky'
+
+		this.isFixed = false;
+		this.isTop = true;
+		this.isBottom = false;
+		
 	},
 	//to make fixed
 	//enhanced replace: faked visual stub is fastly replaced with natural one
@@ -304,7 +288,8 @@ Sticky.prototype = {
 			//if violating from the bottom
 			this.prepareStubs(this.stub2);
 		}
-		this.makeStickedStyle(this.stub2);
+
+		this.makeStickedStyle(this.stub2, this.el);
 
 		this.el = this.el.parentNode.replaceChild(this.stubs, this.el);
 		this.makeStickedStyle(this.el);
@@ -314,24 +299,18 @@ Sticky.prototype = {
 		this.isTop = false;
 		this.isBottom = false;
 
-		className = 'sticky'
-	},
-
-	//Stuffs stubs fragment
-	prepareStubs: function(){
-		for (var i = 0; i < arguments.length; i++){
-			this.stubs.appendChild(arguments[i])
-		}
+		
 	},
 
 	//when bottom land needed
 	parkBottom: function(){
+		this.el.classList.remove(this.options.stickyClass);
+		this.makeParkedBottomStyle(this.el);
+
 		this.isFixed = false;
 		this.isBottom = true;
 		this.isTop = false;
-		this.el.classList.remove(this.options.stickyClass);
-		this.makeParkedBottomStyle(this.el);
-		className = 'sticky'
+		
 	},
 
 	//set up style of element as it is parked at the bottom
@@ -339,15 +318,25 @@ Sticky.prototype = {
 		el.style.cssText = "";
 		el.style.position = "absolute";
 		el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
-		el.style.width = this.stub.offsetWidth + "px";
+		this.mimicStyle(el, this.stub);
+		var stubStyle = getComputedStyle(this.stub);
+		el.style.right = stubStyle.right;
+		el.style.left = stubStyle.left;
 	},
 
-	makeStickedStyle: function(el){
+	makeStickedStyle: function(el, srcEl){
 		el.style.cssText = "";
 		el.style.position = "fixed";
 		el.style.top = this.options.offset + "px";
 		el.classList.add(this.options.stickyClass);
-		this.mimicStyle(el, this.stub);
+		this.mimicStyle(el, srcEl || this.stub);
+	},
+
+	//Stuff stubs fragment
+	prepareStubs: function(){
+		for (var i = 0; i < arguments.length; i++){
+			this.stubs.appendChild(arguments[i])
+		}
 	},
 
 	//count offset borders, container sizes. Detect needed container size
@@ -424,14 +413,12 @@ Sticky.prototype = {
 }
 	//jquery-plugin
 if ($){
-	$.fn[pluginName] = function (arg) {
-		return this.each(function(i,e){
+	$['fn'][pluginName] = function (arg) {
+		return this['each'](function(i,e){
 			var $e = $(e);
 			var instance = new Sticky($e[0], arg);
 			$e.data(pluginName, instance);
 		})
 	};
-
-	$.Sticky = Sticky;
 }
-})(window.jQuery || window.Zepto);
+})(window['jQuery'] || window['Zepto']);

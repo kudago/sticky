@@ -22,11 +22,12 @@ function parseDataAttributes(el) {
 
 //returns value from string with correct type 
 function recognizeValue(str){
+	var v;
 	if (str === "true") {
 		return true;
 	} else if (str === "false") {
 		return false;
-	} else if (!Number.isNaN(v = parseFloat(str))) {
+	} else if (!isNaN(v = parseFloat(str))) {
 		return v;
 	} else {
 		return str;
@@ -47,11 +48,9 @@ function getBoundingOffsetRect(el){
 }
 
 //#if DEV
-	var pluginName = "sticky",
-	className = "sticky"
+	var pluginName = "sticky"
 //#else
-	/* #put "var pluginName = '" + pluginName + "'," */
-	/* #put "className = '" + className + "'" */
+	/* #put "var pluginName = '" + pluginName + "'" */
 //#endif
 
 

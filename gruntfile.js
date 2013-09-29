@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 
 		homemade: {
 			main:{
-				src: "build.js",
+				src: "./build/build.js",
 				dest: "<%= pkg.name %>.js",
 				context: {
 					pluginName: "sticky",
@@ -44,10 +44,33 @@ module.exports = function(grunt) {
 		uglify: {
 			options: {
 				//banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+				compress: {
+					unsafe: true,
+					evaluate: true
+				},
+				preserveComments: false,
+				mangle: {
+					sort: true,
+					toplevel: true
+				}
 			},
 			dist: {
 				files: {
 					'<%= pkg.name %>.min.js': ['<%= homemade.main.dest %>']
+				}
+			}
+		},
+
+		'closure-compiler': {
+			frontend: {
+				closurePath: '.',
+				js: '<%= homemade.main.dest %>',
+				jsOutputFile: '<%= pkg.name %>.min.js',
+				maxBuffer: 800,
+				options: {
+					compilation_level: 'ADVANCED_OPTIMIZATIONS',
+					language_in: 'ECMASCRIPT5_STRICT',
+					//formatting: 'pretty_print'
 				}
 			}
 		}
@@ -57,12 +80,12 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-contrib-jshint');
 	grunt.loadNpmTasks('grunt-contrib-qunit');
-	grunt.loadNpmTasks('grunt-contrib-watch');
 	grunt.loadNpmTasks('grunt-contrib-concat');
+	grunt.loadNpmTasks('grunt-closure-compiler');
 	grunt.loadNpmTasks("grunt-homemade");
 
 	//register tasks
 	grunt.registerTask('test', ['jshint', 'qunit']);
-	grunt.registerTask('default', ['homemade', 'uglify']);
+	grunt.registerTask('default', ['homemade', 'closure-compiler']);
 
 };

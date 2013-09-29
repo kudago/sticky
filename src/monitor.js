@@ -38,7 +38,6 @@ Monitor.prototype = {
 	},
 
 	bindObservers: function(){
-		var self = this;
 		//general events
 		window.addEventListener("resize", this.resize);
 		document.addEventListener("scroll", this.check);
@@ -55,7 +54,7 @@ Monitor.prototype = {
 	},
 
 	_checkInterval: 0,*/
-	check: function(e){
+	check: function(){
 		this.vp.top = window.pageYOffset || document.documentElement.scrollTop;
 	},
 
