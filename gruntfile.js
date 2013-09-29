@@ -82,6 +82,6 @@ module.exports = function(grunt) {
 
 	//register tasks
 	grunt.registerTask('test', ['jshint', 'qunit']);
-	grunt.registerTask('default', ['homemade', 'closure-compiler']);
+	grunt.registerTask('default', ['homemade', 'uglify', 'closure-compiler']);
 
 };

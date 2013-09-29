@@ -1,4 +1,3 @@
-//used as grunt build script
 (function($){
 	//#include "../src/utils.js"
 	//#include "../src/sticky.js"
