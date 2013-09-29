@@ -13,7 +13,7 @@ Sticky.prototype = {
 		vAlign: 'top',
 		stickyClass: "is-stuck",
 		stubClass: "sticky-stub",
-		mode: "exclusive"
+		mode: "stacked"
 	},
 
 	create: function(el, options){

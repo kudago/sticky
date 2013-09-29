@@ -33,12 +33,13 @@ var sticky = new Sticky(document.querySelector(".sticky-element"), {/* options *
 	vAlign: 'top', //TODO
 	stickyClass: "is-stuck", //class to add when element is sticked
 	stubClass: "sticky-stub", //class to add to the spacer
-	mode: Sticky.MODE.MUTUALLY_EXCLUSIVE //one of Sticky.MODE's: NONE, STACKED, MUTUALLY_EXCLUSIVE
+	mode: "stacked" //"exclusive" or "stacked"
 }
 ```
 
 ## API
 
+`recalc` — forces update position, sizes, sticking. Automatically called on window resizes.
 ```js
 //jQuery way
 $(document).trigger("sticky:recalc");
