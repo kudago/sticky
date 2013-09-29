@@ -264,5 +264,7 @@
                 $e.data(pluginName, instance);
             });
         };
+    } else {
+        window["Sticky"] = Sticky;
     }
 })(window["jQuery"] || window["Zepto"]);
