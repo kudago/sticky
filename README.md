@@ -5,8 +5,8 @@ Makes elements sticky*.
 Supports all features of [sticky-kit.js](https://github.com/leafo/sticky-kit) and [sticky.js](https://github.com/garand/sticky), and 
 implements extra features:
 
-* Sticky modes: stacked/mutually exclusive.
-* Any restricting containers possible, not only parent ones.
+* Sticky modes: _stacked_ / _mutually exclusive_.
+* Any restricting containers possible, not only parent ones (unlike [sticky-kit.js](https://github.com/leafo/sticky-kit)).
 * No jquery dependency. Work regardless of jquery presence, but if it is, injects jquery plugin.
 * Extremely enhanced performance, browser repaintings reduced to minimum (one per stick/unstick action).
 * Careful treatment of element's style, like absolute/relative position, floating etc.

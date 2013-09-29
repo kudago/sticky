@@ -40,7 +40,7 @@ function getBoundingOffsetRect(el){
 	c.left = rect.left + (window.pageXOffset || document.documentElement.scrollLeft);
 	c.width = el.offsetWidth;
 	c.height = el.offsetHeight;
-	c.right = window.innerWidth - rect.right;
+	c.right = document.width - rect.right;
 	c.bottom = (window.innerHeight + (window.pageYOffset || document.documentElement.scrollTop) - rect.bottom)
 
 	return c;

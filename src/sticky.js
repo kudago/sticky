@@ -139,14 +139,15 @@ Sticky.prototype = {
 	//sticking inner routines
 	//when park top needed
 	parkTop: function(){
-		this.isFixed = false;
-		this.isTop = true;
-		this.isBottom = false;
 		this.stub = this.el.parentNode.removeChild(this.stub);
 		this.clearMimicStyle();
 		this.el.classList.remove(this.options.stickyClass);
+
+		this.isFixed = false;
+		this.isTop = true;
+		this.isBottom = false;
 		//#if DEV
-		console.log("parkTop")
+		//console.log("parkTop")
 		//#endif
 	},
 	//to make fixed
@@ -159,7 +160,8 @@ Sticky.prototype = {
 			//if violating from the bottom
 			this.prepareStubs(this.stub2);
 		}
-		this.makeStickedStyle(this.stub2);
+
+		this.makeStickedStyle(this.stub2, this.el);
 
 		this.el = this.el.parentNode.replaceChild(this.stubs, this.el);
 		this.makeStickedStyle(this.el);
@@ -170,26 +172,20 @@ Sticky.prototype = {
 		this.isBottom = false;
 
 		//#if DEV
-		console.log("stick")
+		//console.log("stick")
 		//#endif
-	},
-
-	//Stuffs stubs fragment
-	prepareStubs: function(){
-		for (var i = 0; i < arguments.length; i++){
-			this.stubs.appendChild(arguments[i])
-		}
 	},
 
 	//when bottom land needed
 	parkBottom: function(){
+		this.el.classList.remove(this.options.stickyClass);
+		this.makeParkedBottomStyle(this.el);
+
 		this.isFixed = false;
 		this.isBottom = true;
 		this.isTop = false;
-		this.el.classList.remove(this.options.stickyClass);
-		this.makeParkedBottomStyle(this.el);
 		//#if DEV
-		console.log("parkBottom")
+		//console.log("parkBottom")
 		//#endif
 	},
 
@@ -198,15 +194,25 @@ Sticky.prototype = {
 		el.style.cssText = "";
 		el.style.position = "absolute";
 		el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
-		el.style.width = this.stub.offsetWidth + "px";
+		this.mimicStyle(el, this.stub);
+		var stubStyle = getComputedStyle(this.stub);
+		el.style.right = stubStyle.right;
+		el.style.left = stubStyle.left;
 	},
 
-	makeStickedStyle: function(el){
+	makeStickedStyle: function(el, srcEl){
 		el.style.cssText = "";
 		el.style.position = "fixed";
 		el.style.top = this.options.offset + "px";
 		el.classList.add(this.options.stickyClass);
-		this.mimicStyle(el, this.stub);
+		this.mimicStyle(el, srcEl || this.stub);
+	},
+
+	//Stuff stubs fragment
+	prepareStubs: function(){
+		for (var i = 0; i < arguments.length; i++){
+			this.stubs.appendChild(arguments[i])
+		}
 	},
 
 	//count offset borders, container sizes. Detect needed container size
