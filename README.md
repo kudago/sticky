@@ -1,12 +1,15 @@
 # Sticky.js
 
-Full-featured [sticky-kit.js](https://github.com/leafo/sticky-kit) / [sticky.js](https://github.com/garand/sticky) with extra features:
+Carefully makes sticky elements. Sticky elements - ones become fixed being scrolled on.
+Supports all features of [sticky-kit.js](https://github.com/leafo/sticky-kit) and [sticky.js](https://github.com/garand/sticky), but 
+implements corre
 
 * Sticky modes: stacked/mutually exclusive.
 * Any restricting containers possible, not only parent ones.
-* Do not require jquery dependency. Work regardless of jquery.
-* Extremely enhanced performance, browser repaints reduced to minimum.
-* Careful treating of sizes with different initial position modes: absolute, relative, floated and others.
+* No jquery dependency. Work regardless of jquery presence, but if it is, injects jquery plugin.
+* Extremely enhanced performance, browser repaintings reduced to minimum (one per stick/unstick action).
+* Careful treatment of element's style, like absolute/relative position, floating etc.
+* Keep correct work on resizing.
 
 ## Use
 
