@@ -3,12 +3,8 @@ function Sticky(){
 	this.create.apply(this, arguments);
 }
 
-//modes of placing mutual items
-Sticky.MODE = {
-	NONE: 0,
-	STACKED: 1,
-	MUTUALLY_EXCLUSIVE: 2
-}
+//list of instances
+Sticky.list = [];
 
 Sticky.prototype = {
 	options: {
@@ -17,35 +13,26 @@ Sticky.prototype = {
 		vAlign: 'top',
 		stickyClass: "is-stuck",
 		stubClass: "sticky-stub",
-		mode: Sticky.MODE.MUTUALLY_EXCLUSIVE
+		mode: "exclusive"
 	},
 
 	create: function(el, options){
 		this.el = el;
 
 		//recognize attributes
-		var parsedData = parseDataAttributes(this.el);
+		this.options = extend({}, this.options, el.dataset, options);
 
-		if ( typeof parsedData.restrictWithin === "string" ){
-			parsedData.restrictWithin = document.body.querySelector(parsedData.restrictWithin);			
+		//query selector
+		if ( typeof this.options.restrictWithin === "string" ){
+			this.options.restrictWithin = document.body.querySelector(this.options.restrictWithin);			
 		}
 
-		this.options = extend({}, this.options, parsedData, options);
-
-		//translate mode to number
-		if (typeof this.options.mode === "string"){
-			if (this.options.mode == "stacked"){
-				this.options.mode = Sticky.MODE.STACKED
-			} else if (this.options.mode == "exclusive"){
-				this.options.mode = Sticky.MODE.MUTUALLY_EXCLUSIVE
-			} else {
-				this.options.mode = Sticky.MODE.NONE
-			}
-		}
+		//cast offset type
+		this.options.offset = parseFloat(this.options.offset) || 0;
 		
-		//hook monitor
-		this.monitor = StickyMonitor;
-		this.monitor.add(this);
+		//keep list
+		this.el.stickyId = Sticky.list.length;
+		Sticky.list.push(this);
 
 		//init vars
 		this.isFixed = false;
@@ -67,7 +54,7 @@ Sticky.prototype = {
 		var prevEl = this.el;
 		while ((prevEl = prevEl.previousSibling) !== null){
 			if (prevEl.stickyId !== undefined){
-				this.prevSticky = this.monitor.stickies[prevEl.stickyId];
+				this.prevSticky = Sticky.list[prevEl.stickyId];
 				this.prevSticky.nextSticky = this;
 				//console.log("found " + prevEl.stickyId)
 				break;
@@ -92,31 +79,25 @@ Sticky.prototype = {
 		var pStyle = window.getComputedStyle(this.el.parentNode);
 		if (pStyle.position == "static") this.el.parentNode.style.position = "relative";
 
-		//bind to scroll (fasten than monitor cycle)
+		//bind methods
 		this.check = this.check.bind(this);
 		this.recalc = this.recalc.bind(this);
+
+		this.recalc();
+		this.check();
+
+		//bind events
 		document.addEventListener("scroll", this.check);
 		window.addEventListener("resize", function(){ this.recalc(); this.check(); }.bind(this));
 
-		this.recalc();
-		this.initFlags();
-		this.check();
-	},
-
-	initFlags: function(){
-		var offset = getBoundingOffsetRect(this.el);
-		if (offset.top < this.restrictBox.top) {
-			this.parkTop();
-		} else if (offset.top + offset.height > this.restrictBox.bottom){
-			this.parkBottom();
-		} else {
-			this.stick();
-		}
+		//API events
+		document.addEventListener("sticky:recalc", self.recalc);
 	},
 
 	//changing state necessity checker
 	check: function(){
-		var vpTop = this.monitor.vp.top
+		var vpTop = window.pageYOffset || document.documentElement.scrollTop;
+		//console.log(this.isFixed)
 		if (this.isFixed){
 			if (!this.isTop && vpTop + this.options.offset + this.height >= this.restrictBox.bottom){
 				//check bottom parking needed
@@ -127,11 +108,16 @@ Sticky.prototype = {
 				this.parkTop();
 			}
 		} else {
-			if ((this.isTop || this.isBottom)
-				&& vpTop + this.options.offset > this.restrictBox.top
-				&& vpTop + this.options.offset + this.height < this.restrictBox.bottom){
-				//check fringe violation from top or bottom
-				this.stick();
+			if ((this.isTop || this.isBottom) && vpTop + this.options.offset > this.restrictBox.top){
+				//fringe violation from top
+				if (vpTop + this.options.offset + this.height < this.restrictBox.bottom){
+					//fringe violation from top to the sticking zone
+					this.stick();
+				} else if (!this.isBottom) {
+					//fringe violation from top lower than bottom
+					this.stick();
+					this.parkBottom();
+				}
 			}
 		}
 	},
@@ -147,7 +133,7 @@ Sticky.prototype = {
 		this.isTop = true;
 		this.isBottom = false;
 		//#if DEV
-		//console.log("parkTop")
+		console.log("parkTop")
 		//#endif
 	},
 	//to make fixed
@@ -172,7 +158,7 @@ Sticky.prototype = {
 		this.isBottom = false;
 
 		//#if DEV
-		//console.log("stick")
+		console.log("stick")
 		//#endif
 	},
 
@@ -185,7 +171,7 @@ Sticky.prototype = {
 		this.isBottom = true;
 		this.isTop = false;
 		//#if DEV
-		//console.log("parkBottom")
+		console.log("parkBottom")
 		//#endif
 	},
 
@@ -240,12 +226,12 @@ Sticky.prototype = {
 		}
 
 		//make restriction up to next sibling within one container
-		if (this.prevSticky && this.options.mode === Sticky.MODE.MUTUALLY_EXCLUSIVE){
+		if (this.prevSticky && this.options.mode === "exclusive"){
 			this.prevSticky.restrictBox.bottom = this.restrictBox.top;
 		}
 
 		//make offsets for stacked mode
-		if (this.options.mode === Sticky.MODE.STACKED){
+		if (this.options.mode === "stacked"){
 			if (this.prevSticky){
 				var prevMeasurer = this.prevSticky.isFixed ? this.prevSticky.stub : this.prevSticky.el;
 				this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
@@ -257,11 +243,12 @@ Sticky.prototype = {
 		}
 
 		//adjust style
+		//TODO: think of replacing with check();
 		if (this.isFixed){
 			this.mimicStyle(this.el, this.stub);
 		} else {
 			this.clearMimicStyle();
-		}	
+		}
 
 		//console.log(this.restrictBox);
 		//console.log(this.prevSticky && this.prevSticky.restrictBox)

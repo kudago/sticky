@@ -11,31 +11,6 @@ function extend(a){
 	return a;
 }
 
-//attr parser
-function parseDataAttributes(el) {
-	var data = {}, v;
-	for (var prop in el.dataset){
-		var v = recognizeValue(el.dataset[prop]);
-			if (v === "") v[i] = true;		
-		data[prop] = v;
-	}
-	return data;
-}
-
-//returns value from string with correct type 
-function recognizeValue(str){
-	var v;
-	if (str === "true") {
-		return true;
-	} else if (str === "false") {
-		return false;
-	} else if (!isNaN(v = parseFloat(str))) {
-		return v;
-	} else {
-		return str;
-	}
-}
-
 function getBoundingOffsetRect(el){
 	var c = {top:0, left:0, right:0, bottom:0, width: 0, height: 0},
 		rect = el.getBoundingClientRect();
@@ -54,91 +29,13 @@ var pluginName = 'sticky'
 
 
 
-	//observes scroll, resizing, changes of container size, ticks scroll, recalcs
-//singleton
-function Monitor(){
-	this.create.apply(this);
-}
-
-Monitor.prototype = {
-	options: {
-		throttle: 10
-	},
-	create: function(){
-		//create essential variables
-		this.vp = {
-			top: (window.pageYOffset || document.documentElement.scrollTop),
-			height: window.innerHeight
-		};
-
-		//set of sticky elements
-		this.stickies = [];
-
-		//bind methods
-		//this.scroll = this.scroll.bind(this);
-		this.check = this.check.bind(this);
-		this.recalc = this.recalc.bind(this);
-		this.resize = this.resize.bind(this);
-
-		this.bindObservers();
-
-		
-	},
-
-	bindObservers: function(){
-		//general events
-		window.addEventListener("resize", this.resize);
-		document.addEventListener("scroll", this.check);
-		//document.addEventListener("");
-
-		//API events
-		document.addEventListener("sticky:recalc", this.recalc);
-	},
-
-	//throttles check of
-	/*scroll: function(){
-		clearTimeout(this._checkInterval);
-		this._checkInterval = setTimeout(this.check, 0);
-	},
-
-	_checkInterval: 0,*/
-	check: function(){
-		this.vp.top = window.pageYOffset || document.documentElement.scrollTop;
-	},
-
-	//update size
-	resize: function(){
-		clearTimeout(this._recalcInterval);
-		this._recalcInterval = setTimeout(this.recalc, this.options.throttle);
-	},
-
-	_recalcInterval: 0,
-	recalc: function(){
-		this.vp.height = window.innerHeight;
-	},
-
-	//appends new sticker to the observable set: called by stickers primarily
-	add: function(sticky){
-		this.stickies.push(sticky)
-		sticky.el.stickyId = this.stickies.length - 1;
-		this.resize();
-		return sticky
-	}
-}
-
-//singletonze
-var StickyMonitor = new Monitor();
 	//Sticky - element being sticked at runtime
 function Sticky(){
 	this.create.apply(this, arguments);
 }
 
-//modes of placing mutual items
-Sticky.MODE = {
-	NONE: 0,
-	STACKED: 1,
-	MUTUALLY_EXCLUSIVE: 2
-}
+//list of instances
+Sticky.list = [];
 
 Sticky.prototype = {
 	options: {
@@ -147,35 +44,26 @@ Sticky.prototype = {
 		vAlign: 'top',
 		stickyClass: "is-stuck",
 		stubClass: "sticky-stub",
-		mode: Sticky.MODE.MUTUALLY_EXCLUSIVE
+		mode: "exclusive"
 	},
 
 	create: function(el, options){
 		this.el = el;
 
 		//recognize attributes
-		var parsedData = parseDataAttributes(this.el);
+		this.options = extend({}, this.options, el.dataset, options);
 
-		if ( typeof parsedData.restrictWithin === "string" ){
-			parsedData.restrictWithin = document.body.querySelector(parsedData.restrictWithin);			
+		//query selector
+		if ( typeof this.options.restrictWithin === "string" ){
+			this.options.restrictWithin = document.body.querySelector(this.options.restrictWithin);			
 		}
 
-		this.options = extend({}, this.options, parsedData, options);
-
-		//translate mode to number
-		if (typeof this.options.mode === "string"){
-			if (this.options.mode == "stacked"){
-				this.options.mode = Sticky.MODE.STACKED
-			} else if (this.options.mode == "exclusive"){
-				this.options.mode = Sticky.MODE.MUTUALLY_EXCLUSIVE
-			} else {
-				this.options.mode = Sticky.MODE.NONE
-			}
-		}
+		//cast offset type
+		this.options.offset = parseFloat(this.options.offset) || 0;
 		
-		//hook monitor
-		this.monitor = StickyMonitor;
-		this.monitor.add(this);
+		//keep list
+		this.el.stickyId = Sticky.list.length;
+		Sticky.list.push(this);
 
 		//init vars
 		this.isFixed = false;
@@ -197,7 +85,7 @@ Sticky.prototype = {
 		var prevEl = this.el;
 		while ((prevEl = prevEl.previousSibling) !== null){
 			if (prevEl.stickyId !== undefined){
-				this.prevSticky = this.monitor.stickies[prevEl.stickyId];
+				this.prevSticky = Sticky.list[prevEl.stickyId];
 				this.prevSticky.nextSticky = this;
 				//console.log("found " + prevEl.stickyId)
 				break;
@@ -222,31 +110,25 @@ Sticky.prototype = {
 		var pStyle = window.getComputedStyle(this.el.parentNode);
 		if (pStyle.position == "static") this.el.parentNode.style.position = "relative";
 
-		//bind to scroll (fasten than monitor cycle)
+		//bind methods
 		this.check = this.check.bind(this);
 		this.recalc = this.recalc.bind(this);
+
+		this.recalc();
+		this.check();
+
+		//bind events
 		document.addEventListener("scroll", this.check);
 		window.addEventListener("resize", function(){ this.recalc(); this.check(); }.bind(this));
 
-		this.recalc();
-		this.initFlags();
-		this.check();
-	},
-
-	initFlags: function(){
-		var offset = getBoundingOffsetRect(this.el);
-		if (offset.top < this.restrictBox.top) {
-			this.parkTop();
-		} else if (offset.top + offset.height > this.restrictBox.bottom){
-			this.parkBottom();
-		} else {
-			this.stick();
-		}
+		//API events
+		document.addEventListener("sticky:recalc", self.recalc);
 	},
 
 	//changing state necessity checker
 	check: function(){
-		var vpTop = this.monitor.vp.top
+		var vpTop = window.pageYOffset || document.documentElement.scrollTop;
+		//console.log(this.isFixed)
 		if (this.isFixed){
 			if (!this.isTop && vpTop + this.options.offset + this.height >= this.restrictBox.bottom){
 				//check bottom parking needed
@@ -257,11 +139,16 @@ Sticky.prototype = {
 				this.parkTop();
 			}
 		} else {
-			if ((this.isTop || this.isBottom)
-				&& vpTop + this.options.offset > this.restrictBox.top
-				&& vpTop + this.options.offset + this.height < this.restrictBox.bottom){
-				//check fringe violation from top or bottom
-				this.stick();
+			if ((this.isTop || this.isBottom) && vpTop + this.options.offset > this.restrictBox.top){
+				//fringe violation from top
+				if (vpTop + this.options.offset + this.height < this.restrictBox.bottom){
+					//fringe violation from top to the sticking zone
+					this.stick();
+				} else if (!this.isBottom) {
+					//fringe violation from top lower than bottom
+					this.stick();
+					this.parkBottom();
+				}
 			}
 		}
 	},
@@ -319,9 +206,7 @@ Sticky.prototype = {
 		el.style.position = "absolute";
 		el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
 		this.mimicStyle(el, this.stub);
-		var stubStyle = getComputedStyle(this.stub);
-		el.style.right = stubStyle.right;
-		el.style.left = stubStyle.left;
+		el.style.left = this.stub.offsetLeft + "px";
 	},
 
 	makeStickedStyle: function(el, srcEl){
@@ -366,12 +251,12 @@ Sticky.prototype = {
 		}
 
 		//make restriction up to next sibling within one container
-		if (this.prevSticky && this.options.mode === Sticky.MODE.MUTUALLY_EXCLUSIVE){
+		if (this.prevSticky && this.options.mode === "exclusive"){
 			this.prevSticky.restrictBox.bottom = this.restrictBox.top;
 		}
 
 		//make offsets for stacked mode
-		if (this.options.mode === Sticky.MODE.STACKED){
+		if (this.options.mode === "stacked"){
 			if (this.prevSticky){
 				var prevMeasurer = this.prevSticky.isFixed ? this.prevSticky.stub : this.prevSticky.el;
 				this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
@@ -383,26 +268,30 @@ Sticky.prototype = {
 		}
 
 		//adjust style
+		//TODO: think of replacing with check();
 		if (this.isFixed){
 			this.mimicStyle(this.el, this.stub);
 		} else {
 			this.clearMimicStyle();
-		}	
+		}
 
 		//console.log(this.restrictBox);
 		//console.log(this.prevSticky && this.prevSticky.restrictBox)
 		//console.groupEnd();
 	},
 
+	_directions: ["left", "top", "right", "bottom"],
+	_mimicProperties: ["padding-", "border-"],
 	mimicStyle: function(to, from){
 		var stubStyle = getComputedStyle(from),
 			stubOffset = getBoundingOffsetRect(from);
-		to.style.width = stubStyle.width;
-		if (stubStyle.left !== "auto"){
-			to.style.left = stubOffset.left + "px";
-		}
-		if (stubStyle.right !== "auto"){
-			to.style.right = stubOffset.right + "px";
+		to.style.width = stubOffset.width + "px";
+		to.style.left = stubOffset.left + "px";
+		for (var i = 0; i < this._mimicProperties.length; i++){
+			for (var j = 0; j < this._directions.length; j++){
+				var prop = this._mimicProperties[i] + this._directions[j];
+				to.style[prop] = stubStyle[prop];
+			}
 		}
 	},
 

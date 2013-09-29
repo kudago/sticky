@@ -41,22 +41,18 @@ module.exports = function(grunt) {
 			},
 		},
 
+		//used as beautifier
 		uglify: {
 			options: {
 				//banner: '/*! <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
-				compress: {
-					unsafe: true,
-					evaluate: true
-				},
-				preserveComments: false,
-				mangle: {
-					sort: true,
-					toplevel: true
-				}
+				compress: false,
+				preserveComments: true,
+				mangle: false,
+				beautify: true,
 			},
 			dist: {
 				files: {
-					'<%= pkg.name %>.min.js': ['<%= homemade.main.dest %>']
+					'<%= pkg.name %>.js': ['<%= homemade.main.dest %>']
 				}
 			}
 		},
@@ -64,13 +60,13 @@ module.exports = function(grunt) {
 		'closure-compiler': {
 			frontend: {
 				closurePath: '.',
-				js: '<%= homemade.main.dest %>',
+				js: '<%= pkg.name %>.js',
 				jsOutputFile: '<%= pkg.name %>.min.js',
 				maxBuffer: 800,
 				options: {
 					compilation_level: 'ADVANCED_OPTIMIZATIONS',
 					language_in: 'ECMASCRIPT5_STRICT',
-					//formatting: 'pretty_print'
+					formatting: 'pretty_print'
 				}
 			}
 		}
