@@ -13,7 +13,8 @@ Sticky.prototype = {
 		vAlign: 'top',
 		stickyClass: "is-stuck",
 		stubClass: "sticky-stub",
-		mode: "stacked"
+		mode: "stacked",
+		collapseStacked: true
 	},
 
 	create: function(el, options){
@@ -234,14 +235,14 @@ Sticky.prototype = {
 			} else if (this.options.mode === "stacked"){
 				//make offsets for stacked mode
 				var prevMeasurer = (this.prevSticky.isTop ? this.prevSticky.el : this.prevSticky.stub);
-				if (this.isOverlap(measureEl, prevMeasurer)){
+				if (this.options.collapseStacked && !this.isOverlap(measureEl, prevMeasurer)){
+					this.options.offset = this.prevSticky.options.offset;
+				} else {
 					this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
 					var prevEl = this;
 					while((prevEl = prevEl.prevSticky)){
 						prevEl.restrictBox.bottom -= this.height;
 					}
-				} else {
-					this.options.offset = this.prevSticky.options.offset;
 				}
 			}
 		}
