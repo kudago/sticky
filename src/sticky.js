@@ -228,17 +228,21 @@ Sticky.prototype = {
 		}
 
 		//make restriction up to next sibling within one container
-		if (this.prevSticky && this.options.mode === "exclusive"){
-			this.prevSticky.restrictBox.bottom = this.restrictBox.top;
-		}
-
-		//make offsets for stacked mode
-		if (this.prevSticky && this.options.mode === "stacked"){
-			var prevMeasurer = (this.prevSticky.isTop ? this.prevSticky.el : this.prevSticky.stub);
-			this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
-			var prevEl = this;
-			while((prevEl = prevEl.prevSticky)){
-				prevEl.restrictBox.bottom -= this.height;
+		if (this.prevSticky){
+			if (this.options.mode === "exclusive"){
+				this.prevSticky.restrictBox.bottom = this.restrictBox.top;
+			} else if (this.options.mode === "stacked"){
+				//make offsets for stacked mode
+				var prevMeasurer = (this.prevSticky.isTop ? this.prevSticky.el : this.prevSticky.stub);
+				if (this.isOverlap(measureEl, prevMeasurer)){
+					this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
+					var prevEl = this;
+					while((prevEl = prevEl.prevSticky)){
+						prevEl.restrictBox.bottom -= this.height;
+					}
+				} else {
+					this.options.offset = this.prevSticky.options.offset;
+				}
 			}
 		}
 		
@@ -260,6 +264,18 @@ Sticky.prototype = {
 		}
 
 		this.check();
+	},
+	//checks overlapping widths
+	isOverlap: function(left, right){
+		var lLeft = left.offsetLeft,
+			lRight = left.offsetLeft + left.offsetWidth,
+			rLeft = right.offsetLeft,
+			rRight = right.offsetWidth + right.offsetLeft;
+		if (lRight < rLeft && lLeft < rLeft
+			|| lRight > rRight && lLeft > rRight){
+			return false;
+		}
+		return true;
 	},
 
 	_directions: ["left", "top", "right", "bottom"],
