@@ -26,6 +26,47 @@
         c.bottom = window.innerHeight + (window.pageYOffset || document.documentElement.scrollTop) - rect.bottom;
         return c;
     }
+    //returns clean clone
+    var badTags = [ "object", "iframe", "embed", "img" ];
+    function clone(el) {
+        var clone = el.cloneNode(true);
+        for (var i = 0; i < badTags.length; i++) {
+            var tags = clone.querySelectorAll(badTags[i]);
+            for (var j = tags.length; j--; ) {
+                tags[j].removeAttribute("src");
+                tags[j].removeAttribute("href");
+                tags[j].removeAttribute("rel");
+                tags[j].removeAttribute("srcdoc");
+                if (tags[j].tagName === "SCRIPT") tags[j].parentNode.replaceChild(tags[j]);
+            }
+        }
+        return clone;
+    }
+    var directions = [ "left", "top", "right", "bottom" ], mimicProperties = [ "padding-", "border-" ];
+    //copies size-related style of stub
+    function mimicStyle(to, from) {
+        var stubStyle = getComputedStyle(from), stubOffset = getBoundingOffsetRect(from), pl = 0, pr = 0;
+        if (stubStyle["box-sizing"] !== "border-box") {
+            pl = ~~stubStyle["padding-left"].slice(0, -2);
+            pr = ~~stubStyle["padding-right"].slice(0, -2);
+        }
+        to.style.width = stubOffset.width - pl - pr + "px";
+        to.style.left = stubOffset.left + "px";
+        for (var i = 0; i < mimicProperties.length; i++) {
+            for (var j = 0; j < directions.length; j++) {
+                var prop = mimicProperties[i] + directions[j];
+                to.style[prop] = stubStyle[prop];
+            }
+        }
+    }
+    //checks overlapping widths
+    function isOverlap(left, right) {
+        var lLeft = left.offsetLeft, lRight = left.offsetLeft + left.offsetWidth, rLeft = right.offsetLeft, rRight = right.offsetWidth + right.offsetLeft;
+        if (lRight < rLeft && lLeft < rLeft || lRight > rRight && lLeft > rRight) {
+            return false;
+        }
+        return true;
+    }
     var pluginName = "sticky";
     //Sticky - element being sticked at runtime
     function Sticky() {
@@ -46,6 +87,7 @@
         },
         create: function(el, options) {
             this.el = el;
+            this.parent = this.el.parentNode;
             //recognize attributes
             this.options = extend({}, this.options, el.dataset, options);
             //query selector
@@ -70,7 +112,7 @@
             //self position & size
             this.height = 0;
             //parent position & size
-            this.parent = {
+            this.parentBox = {
                 top: 0,
                 height: 0
             };
@@ -85,18 +127,17 @@
                 }
             }
             //stub is a spacer filling space when element is stuck
-            this.stub = this.el.cloneNode(true);
+            this.stub = clone(this.el);
             this.stub.classList.add(this.options.stubClass);
             this.stub.style.visibility = "hidden";
+            this.stub.style.display = "none";
+            this.parent.insertBefore(this.stub, this.el);
             //save initial inline style
             this.initialStyle = this.el.style.cssText;
-            //visual stub needed for smooth rendering of switch
-            this.stub2 = this.el.cloneNode(true);
-            //fast replacer
-            this.stubs = document.createDocumentFragment();
+            this.initialDisplay = getComputedStyle(this.el)["display"];
             //ensure parent's container relative coordinates
-            var pStyle = window.getComputedStyle(this.el.parentNode);
-            if (pStyle.position == "static") this.el.parentNode.style.position = "relative";
+            var pStyle = window.getComputedStyle(this.parent);
+            if (pStyle.position == "static") this.parent.style.position = "relative";
             //bind methods
             this.check = this.check.bind(this);
             this.recalc = this.recalc.bind(this);
@@ -138,9 +179,11 @@
         //sticking inner routines
         //when park top needed
         parkTop: function() {
-            this.stub = this.el.parentNode.removeChild(this.stub);
-            this.clearMimicStyle();
+            //this.el = this.parent.removeChild(this.el);
+            this.el.style.cssText = this.initialStyle;
             this.el.classList.remove(this.options.stickyClass);
+            //this.stub = this.parent.replaceChild(this.el, this.stub);
+            this.stub.style.display = "none";
             this.isFixed = false;
             this.isTop = true;
             this.isBottom = false;
@@ -148,17 +191,10 @@
         //to make fixed
         //enhanced replace: faked visual stub is fastly replaced with natural one
         stick: function() {
-            if (!this.isBottom) {
-                //if violating from the top
-                this.prepareStubs(this.stub, this.stub2);
-            } else {
-                //if violating from the bottom
-                this.prepareStubs(this.stub2);
-            }
-            this.makeStickedStyle(this.stub2, this.el);
-            this.el = this.el.parentNode.replaceChild(this.stubs, this.el);
+            //this.el = this.parent.replaceChild(this.stub, this.el);
+            this.stub.style.display = this.initialDisplay;
             this.makeStickedStyle(this.el);
-            this.stub2 = this.stub.parentNode.replaceChild(this.el, this.stub2);
+            //this.parent.insertBefore(this.el, this.stub);
             this.isFixed = true;
             this.isTop = false;
             this.isBottom = false;
@@ -175,8 +211,8 @@
         makeParkedBottomStyle: function(el) {
             el.style.cssText = "";
             el.style.position = "absolute";
-            el.style.top = this.restrictBox.bottom - this.parent.top - this.height + "px";
-            this.mimicStyle(el, this.stub);
+            el.style.top = this.restrictBox.bottom - this.parentBox.top - this.height + "px";
+            mimicStyle(el, this.stub);
             el.style.left = this.stub.offsetLeft + "px";
         },
         makeStickedStyle: function(el, srcEl) {
@@ -184,20 +220,14 @@
             el.style.position = "fixed";
             el.style.top = this.options.offset + "px";
             el.classList.add(this.options.stickyClass);
-            this.mimicStyle(el, srcEl || this.stub);
-        },
-        //Stuff stubs fragment
-        prepareStubs: function() {
-            for (var i = 0; i < arguments.length; i++) {
-                this.stubs.appendChild(arguments[i]);
-            }
+            mimicStyle(el, srcEl || this.stub);
         },
         //count offset borders, container sizes. Detect needed container size
         recalc: function() {
             //console.group("recalc:" + this.el.stickyId)
             var measureEl = this.isTop ? this.el : this.stub;
             //update parent container size & offsets
-            this.parent = getBoundingOffsetRect(measureEl.parentNode);
+            this.parentBox = getBoundingOffsetRect(this.parent);
             //update self size & position
             this.height = measureEl.offsetHeight;
             //update restrictions
@@ -211,7 +241,7 @@
             } else {
                 //case of parent container
                 this.restrictBox.top = getBoundingOffsetRect(measureEl).top;
-                this.restrictBox.bottom = this.parent.height + this.parent.top;
+                this.restrictBox.bottom = this.parentBox.height + this.parentBox.top;
             }
             //make restriction up to next sibling within one container
             if (this.prevSticky) {
@@ -220,7 +250,7 @@
                 } else if (this.options.mode === "stacked") {
                     //make offsets for stacked mode
                     var prevMeasurer = this.prevSticky.isTop ? this.prevSticky.el : this.prevSticky.stub;
-                    if (this.options.collapseStacked && !this.isOverlap(measureEl, prevMeasurer)) {
+                    if (this.options.collapseStacked && !isOverlap(measureEl, prevMeasurer)) {
                         this.options.offset = this.prevSticky.options.offset;
                     } else {
                         this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
@@ -236,37 +266,13 @@
         },
         adjustSizeAndPosition: function() {
             if (this.isTop) {
-                this.clearMimicStyle();
+                this.el.style.cssText = this.initialStyle;
             } else if (this.isBottom) {
                 this.makeParkedBottomStyle(this.el);
             } else {
                 this.makeStickedStyle(this.el);
             }
             this.check();
-        },
-        //checks overlapping widths
-        isOverlap: function(left, right) {
-            var lLeft = left.offsetLeft, lRight = left.offsetLeft + left.offsetWidth, rLeft = right.offsetLeft, rRight = right.offsetWidth + right.offsetLeft;
-            if (lRight < rLeft && lLeft < rLeft || lRight > rRight && lLeft > rRight) {
-                return false;
-            }
-            return true;
-        },
-        _directions: [ "left", "top", "right", "bottom" ],
-        _mimicProperties: [ "padding-", "border-" ],
-        mimicStyle: function(to, from) {
-            var stubStyle = getComputedStyle(from), stubOffset = getBoundingOffsetRect(from);
-            to.style.width = stubOffset.width + "px";
-            to.style.left = stubOffset.left + "px";
-            for (var i = 0; i < this._mimicProperties.length; i++) {
-                for (var j = 0; j < this._directions.length; j++) {
-                    var prop = this._mimicProperties[i] + this._directions[j];
-                    to.style[prop] = stubStyle[prop];
-                }
-            }
-        },
-        clearMimicStyle: function() {
-            this.el.style.cssText = this.initialStyle;
         }
     };
     //jquery-plugin

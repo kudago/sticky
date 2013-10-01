@@ -52,7 +52,7 @@ body{
 <div class="main-column">
 	<div class="sticky" data-offset="0">Sticky header</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
-	<div class="sticky">Another sticky</div>
+	<div class="sticky" style="padding: 10px">Another sticky</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
 	<p>Cras mattis consectetur purus sit amet fermentum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus mollis interdum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam quis risus eget urna mollis ornare vel eu leo. Curabitur blandit tempus porttitor. Donec id elit non mi porta gravida at eget metus.
 
@@ -84,17 +84,26 @@ body{
 
 <div class="recalc" title="recalc">❄</div>
 
-<script src="../js/zepto.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.js"></script>
 
-<!--<script src="../src/utils.js"></script>
+<script src="../src/utils.js"></script>
 <script src="../src/sticky.js"></script>
-<script src="../src/jquery.sticky.js"></script>-->
-<script type="text/javascript" src="../sticky.min.js"></script>
+<script src="../src/jquery.sticky.js"></script>
+<!--<script type="text/javascript" src="../sticky.min.js"></script>-->
 
 <script type="text/javascript">
-	$(".sticky").sticky();
+	/*$(".sticky").sticky();
 
 	$(".recalc").click(function(){
 		$(document).trigger("sticky:recalc");
+	})*/
+
+	var set = document.querySelectorAll(".sticky");
+	for (var i = 0; i < set.length; i++){
+		new Sticky(set[i]);
+	}
+
+	document.querySelector(".recalc").addEventListener(function(){
+		document.dispatchEvent(new CustomEvent("sticky:recalc"))
 	})
 </script>

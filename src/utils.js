@@ -22,6 +22,62 @@ function getBoundingOffsetRect(el){
 	return c;
 }
 
+//returns clean clone
+var badTags = ["object", "iframe", "embed", "img"];
+function clone(el){
+	var clone = el.cloneNode(true);
+	for (var i = 0; i < badTags.length; i++){
+		var tags = clone.querySelectorAll(badTags[i]);
+		for (var j = tags.length; j--; ){
+			tags[j].removeAttribute("src");
+			tags[j].removeAttribute("href");
+			tags[j].removeAttribute("rel");
+			tags[j].removeAttribute("srcdoc");
+			if (tags[j].tagName === "SCRIPT") tags[j].parentNode.replaceChild(tags[j])
+		}
+	}
+	return clone;
+}
+
+
+var directions = ["left", "top", "right", "bottom"],
+	mimicProperties = ["padding-", "border-"];
+
+//copies size-related style of stub
+function mimicStyle(to, from){
+	var stubStyle = getComputedStyle(from),
+		stubOffset = getBoundingOffsetRect(from),
+		pl = 0, pr = 0;
+	
+	if (stubStyle["box-sizing"] !== "border-box"){
+		pl = ~~stubStyle["padding-left"].slice(0,-2)
+		pr = ~~stubStyle["padding-right"].slice(0,-2)
+	}
+
+	to.style.width = (stubOffset.width - pl - pr) + "px";
+	to.style.left = stubOffset.left + "px";
+	for (var i = 0; i < mimicProperties.length; i++){
+		for (var j = 0; j < directions.length; j++){
+			var prop = mimicProperties[i] + directions[j];
+			to.style[prop] = stubStyle[prop];
+		}
+	}
+}
+
+//checks overlapping widths
+function isOverlap(left, right){
+	var lLeft = left.offsetLeft,
+		lRight = left.offsetLeft + left.offsetWidth,
+		rLeft = right.offsetLeft,
+		rRight = right.offsetWidth + right.offsetLeft;
+	if (lRight < rLeft && lLeft < rLeft
+		|| lRight > rRight && lLeft > rRight){
+		return false;
+	}
+	return true;
+}
+
+
 //#if DEV
 	var pluginName = "sticky"
 //#else
