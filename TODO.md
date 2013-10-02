@@ -4,3 +4,5 @@
 * Handle margin-tops
 
 * Make animations for mutually exclusive
+
+* Fix margin-tops behaviour

@@ -83,9 +83,13 @@
             stickyClass: "is-stuck",
             stubClass: "sticky-stub",
             mode: "stacked",
-            collapseStacked: true
+            collapseStacked: true,
+            prevSticky: null
         },
         create: function(el, options) {
+            if (el.dataset.stickyId) {
+                return console.log("Sticky already exist");
+            }
             this.el = el;
             this.parent = this.el.parentNode;
             //recognize attributes
@@ -99,7 +103,7 @@
             //cast offset type
             this.options.offset = parseFloat(this.options.offset) || 0;
             //keep list
-            this.el.stickyId = Sticky.list.length;
+            this.el.dataset.stickyId = Sticky.list.length;
             Sticky.list.push(this);
             //init vars
             this.isFixed = false;
@@ -118,12 +122,21 @@
             };
             //Find stickies siblings within the container
             var prevEl = this.el;
-            while ((prevEl = prevEl.previousSibling) !== null) {
-                if (prevEl.stickyId !== undefined) {
-                    this.prevSticky = Sticky.list[prevEl.stickyId];
+            if (this.options.prevSticky) {
+                var prevStickyEl = typeof this.options.prevSticky === "string" ? document.querySelector(this.options.prevSticky) : this.options.prevSticky;
+                if (prevStickyEl.dataset.stickyId && Sticky.list[prevStickyEl.dataset.stickyId]) {
+                    this.prevSticky = Sticky.list[prevStickyEl.dataset.stickyId];
                     this.prevSticky.nextSticky = this;
-                    //console.log("found " + prevEl.stickyId)
-                    break;
+                } else {}
+            } else {
+                //find prev stickies between preceding siblings
+                while ((prevEl = prevEl.previousSibling) !== null) {
+                    if (prevEl.nodeType === 1 && prevEl.dataset.stickyId !== undefined) {
+                        this.prevSticky = Sticky.list[prevEl.dataset.stickyId];
+                        this.prevSticky.nextSticky = this;
+                        //console.log("found " + prevEl.dataset.stickyId)
+                        break;
+                    }
                 }
             }
             //stub is a spacer filling space when element is stuck
@@ -152,7 +165,7 @@
         //changing state necessity checker
         check: function() {
             var vpTop = window.pageYOffset || document.documentElement.scrollTop;
-            //console.log("check:" + this.el.stickyId, "isFixed:" + this.isFixed, this.restrictBox)
+            //console.log("check:" + this.el.dataset.stickyId, "isFixed:" + this.isFixed, this.restrictBox)
             if (this.isFixed) {
                 if (!this.isTop && vpTop + this.options.offset + this.height >= this.restrictBox.bottom) {
                     //check bottom parking needed
@@ -209,14 +222,14 @@
         },
         //set up style of element as it is parked at the bottom
         makeParkedBottomStyle: function(el) {
-            el.style.cssText = "";
+            el.style.cssText = this.initialStyle;
             el.style.position = "absolute";
             el.style.top = this.restrictBox.bottom - this.parentBox.top - this.height + "px";
             mimicStyle(el, this.stub);
             el.style.left = this.stub.offsetLeft + "px";
         },
         makeStickedStyle: function(el, srcEl) {
-            el.style.cssText = "";
+            el.style.cssText = this.initialStyle;
             el.style.position = "fixed";
             el.style.top = this.options.offset + "px";
             el.classList.add(this.options.stickyClass);
@@ -224,7 +237,7 @@
         },
         //count offset borders, container sizes. Detect needed container size
         recalc: function() {
-            //console.group("recalc:" + this.el.stickyId)
+            //console.group("recalc:" + this.el.dataset.stickyId)
             var measureEl = this.isTop ? this.el : this.stub;
             //update parent container size & offsets
             this.parentBox = getBoundingOffsetRect(this.parent);
