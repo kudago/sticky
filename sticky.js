@@ -47,8 +47,8 @@
     function mimicStyle(to, from) {
         var stubStyle = getComputedStyle(from), stubOffset = getBoundingOffsetRect(from), pl = 0, pr = 0;
         if (stubStyle["box-sizing"] !== "border-box") {
-            pl = ~~stubStyle["padding-left"].slice(0, -2);
-            pr = ~~stubStyle["padding-right"].slice(0, -2);
+            pl = ~~stubStyle.paddingLeft.slice(0, -2);
+            pr = ~~stubStyle.paddingRight.slice(0, -2);
         }
         to.style.width = stubOffset.width - pl - pr + "px";
         to.style.left = stubOffset.left + "px";
@@ -75,6 +75,7 @@
     //list of instances
     Sticky.list = [];
     Sticky.prototype = {
+        /** @expose */
         options: {
             offset: 0,
             restrictWithin: null,

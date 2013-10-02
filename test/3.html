@@ -16,6 +16,7 @@ body{
 }
 .side-column .sticky{
 	min-height: 100px;
+	margin-top: 10px;
 }
 .main-column{
 	outline: 1px solid blue;
@@ -37,6 +38,9 @@ body{
 	line-height: 40px;
 	font-size: 28px;
 	border-radius: 4px;
+}
+.is-stuck{
+	background: rgba(205,0,0, .2);
 }
 </style>
 
@@ -74,13 +78,15 @@ body{
 </div>
 
 <div class="recalc" title="recalc">❄</div>
+<div class="delete" title="delete">✂</div>
+<div class="add" title="add">+</div>
 
 
-<!--<script src="../src/utils.js"></script>
+<script src="../src/utils.js"></script>
 <script src="../src/sticky.js"></script>
-<script src="../src/jquery.sticky.js"></script>-->
+<script src="../src/jquery.sticky.js"></script>
 
-<script type="text/javascript" src="../sticky.min.js"></script>
+<!--<script type="text/javascript" src="../sticky.min.js"></script>-->
 <script type="text/javascript">
 	/*$(".sticky").sticky();
 
@@ -93,8 +99,16 @@ body{
 		new Sticky(set[i]);
 	}
 
-	document.querySelector(".recalc").addEventListener(function(){
+	document.querySelector(".recalc").addEventListener("click", function(){
 		document.dispatchEvent(new CustomEvent("sticky:recalc"))
+	})
+
+	document.querySelector(".add").addEventListener("click", function(){
+
+	})
+
+	document.querySelector(".delete").addEventListener("click", function(){
+
 	})
 
 </script>

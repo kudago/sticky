@@ -7,15 +7,16 @@ function Sticky(){
 Sticky.list = [];
 
 Sticky.prototype = {
+	/** @expose */
 	options: {
-		offset: 0,
-		restrictWithin: null, //element or bounding box
-		vAlign: 'top',
-		stickyClass: "is-stuck",
-		stubClass: "sticky-stub",
-		mode: "stacked",
-		collapseStacked: true,
-		prevSticky: null
+		"offset": 0,
+		"restrictWithin": null, //element or bounding box
+		"vAlign": 'top',
+		"stickyClass": "is-stuck",
+		"stubClass": "sticky-stub",
+		"mode": "stacked",
+		"collapseStacked": true,
+		"prevSticky": null
 	},
 
 	create: function(el, options){
@@ -118,7 +119,7 @@ Sticky.prototype = {
 		var vpTop = window.pageYOffset || document.documentElement.scrollTop;
 		//console.log("check:" + this.el.dataset["stickyId"], "isFixed:" + this.isFixed, this.restrictBox)
 		if (this.isFixed){
-			if (!this.isTop && vpTop + this.options["offset"] + this.height >= this.restrictBox.bottom){
+			if (!this.isTop && vpTop + this.options["offset"] + this.height + this.mt + this.mb >= this.restrictBox.bottom){
 				//check bottom parking needed
 				this.parkBottom();
 			}
@@ -129,7 +130,7 @@ Sticky.prototype = {
 		} else {
 			if ((this.isTop || this.isBottom) && vpTop + this.options["offset"] > this.restrictBox.top){
 				//fringe violation from top
-				if (vpTop + this.options["offset"] + this.height < this.restrictBox.bottom){
+				if (vpTop + this.options["offset"] + this.height + this.mt + this.mb < this.restrictBox.bottom){
 					//fringe violation from top to the sticking zone
 					this.stick();
 				} else if (!this.isBottom) {
@@ -191,7 +192,7 @@ Sticky.prototype = {
 	makeParkedBottomStyle: function(el){
 		el.style.cssText = this.initialStyle;
 		el.style.position = "absolute";
-		el.style.top = this.restrictBox.bottom - this.parentBox.top - this.height + "px";
+		el.style.top = this.restrictBox.bottom - this.parentBox.top - this.height - this.mt - this.mb + "px";
 		mimicStyle(el, this.stub);
 		el.style.left = this.stub.offsetLeft + "px";
 	},
@@ -211,10 +212,15 @@ Sticky.prototype = {
 		var measureEl = (this.isTop ? this.el : this.stub);
 
 		//update parent container size & offsets
-		this.parentBox = getBoundingOffsetRect(this.parent)
+		this.parentBox = getBoundingOffsetRect(this.parent);
 
 		//update self size & position
 		this.height = measureEl.offsetHeight;
+		var mStyle = getComputedStyle(measureEl);
+		this.ml = ~~mStyle.marginLeft.slice(0,-2);
+		this.mr = ~~mStyle.marginRight.slice(0,-2);
+		this.mt = ~~mStyle.marginTop.slice(0,-2);
+		this.mb = ~~mStyle.marginBottom.slice(0,-2);
 
 		//update restrictions
 		if (this.restrictWithin instanceof Element){
@@ -240,10 +246,10 @@ Sticky.prototype = {
 				if (this.options["collapseStacked"] && !isOverlap(measureEl, prevMeasurer)){
 					this.options["offset"] = this.prevSticky.options["offset"];
 				} else {
-					this.options["offset"] = this.prevSticky.options["offset"] + prevMeasurer.offsetHeight;
+					this.options["offset"] = this.prevSticky.options["offset"] + prevMeasurer.offsetHeight + this.prevSticky.mt + this.prevSticky.mb;
 					var prevEl = this;
 					while((prevEl = prevEl.prevSticky)){
-						prevEl.restrictBox.bottom -= this.height;
+						prevEl.restrictBox.bottom -= (this.height + this.mt + this.mb);
 					}
 				}
 			}
