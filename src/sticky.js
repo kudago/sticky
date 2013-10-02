@@ -5,6 +5,7 @@ function Sticky(){
 
 //list of instances
 Sticky.list = [];
+Sticky.stack = {};
 
 Sticky.prototype = {
 	/** @expose */
@@ -14,9 +15,8 @@ Sticky.prototype = {
 		"vAlign": 'top',
 		"stickyClass": "is-stuck",
 		"stubClass": "sticky-stub",
-		"mode": "stacked",
-		"collapseStacked": true,
-		"prevSticky": null
+		"stack": null,
+		"collapse": true
 	},
 
 	create: function(el, options){
@@ -42,6 +42,7 @@ Sticky.prototype = {
 		
 		//keep list
 		this.el.dataset["stickyId"] = Sticky.list.length;
+		this.id = Sticky.list.length;
 		Sticky.list.push(this);
 
 		//init vars
@@ -60,27 +61,16 @@ Sticky.prototype = {
 			height: 0
 		}
 
-		//Find stickies siblings within the container
+		//Detect whether stacking needed
 		var prevEl = this.el;
-		if (this.options["prevSticky"]) {
-			var prevStickyEl = (typeof this.options["prevSticky"] === "string") ? document.querySelector(this.options["prevSticky"]) : this.options["prevSticky"];
-			if (prevStickyEl.dataset["stickyId"] && Sticky.list[prevStickyEl.dataset["stickyId"]]){
-				this.prevSticky = Sticky.list[prevStickyEl.dataset["stickyId"]]
-				this.prevSticky.nextSticky = this;
+		if (this.options["stack"]) {
+			this.stack = this.options["stack"];
+			if (!Sticky.stack[this.stack]){
+				Sticky.stack[this.stack] = [this]
+				this.stackId = 0
 			} else {
-				//TODO: causes infinite lag
-				//this.prevSticky = new Sticky(prevStickyEl);
-				//this.prevSticky.nextSticky = this;
-			}
-		} else {
-			//find prev stickies between preceding siblings
-			while ((prevEl = prevEl.previousSibling) !== null){
-				if (prevEl.nodeType === 1 && prevEl.dataset["stickyId"] !== undefined){
-					this.prevSticky = Sticky.list[prevEl.dataset["stickyId"]];
-					this.prevSticky.nextSticky = this;
-					//console.log("found " + prevEl.dataset["stickyId"])
-					break;
-				}
+				this.stackId = Sticky.stack[this.stack].length;
+				Sticky.stack[this.stack].push(this)
 			}
 		}
 
@@ -96,7 +86,7 @@ Sticky.prototype = {
 		this.initialDisplay = getComputedStyle(this.el)["display"];
 
 		//ensure parent's container relative coordinates
-		var pStyle = window.getComputedStyle(this.parent);
+		var pStyle = getComputedStyle(this.parent);
 		if (pStyle.position == "static") this.parent.style.position = "relative";
 
 		//bind methods
@@ -123,12 +113,12 @@ Sticky.prototype = {
 				//check bottom parking needed
 				this.parkBottom();
 			}
-			if (!this.isBottom && vpTop + this.options["offset"] <= this.restrictBox.top){
+			if (!this.isBottom && vpTop + this.options["offset"] + this.mt <= this.restrictBox.top){
 				//check top parking needed
 				this.parkTop();
 			}
 		} else {
-			if ((this.isTop || this.isBottom) && vpTop + this.options["offset"] > this.restrictBox.top){
+			if ((this.isTop || this.isBottom) && vpTop + this.options["offset"] + this.mt > this.restrictBox.top){
 				//fringe violation from top
 				if (vpTop + this.options["offset"] + this.height + this.mt + this.mb < this.restrictBox.bottom){
 					//fringe violation from top to the sticking zone
@@ -208,7 +198,7 @@ Sticky.prototype = {
 	//count offset borders, container sizes. Detect needed container size
 	recalc: function(){
 		//console.group("recalc:" + this.el.dataset["stickyId"])
-
+		console.log("recalc")
 		var measureEl = (this.isTop ? this.el : this.stub);
 
 		//update parent container size & offsets
@@ -237,29 +227,26 @@ Sticky.prototype = {
 		}
 
 		//make restriction up to next sibling within one container
-		if (this.prevSticky){
-			if (this.options["mode"] === "exclusive"){
-				this.prevSticky.restrictBox.bottom = this.restrictBox.top;
-			} else if (this.options["mode"] === "stacked"){
-				//make offsets for stacked mode
-				var prevMeasurer = (this.prevSticky.isTop ? this.prevSticky.el : this.prevSticky.stub);
-				if (this.options["collapseStacked"] && !isOverlap(measureEl, prevMeasurer)){
-					this.options["offset"] = this.prevSticky.options["offset"];
-				} else {
-					this.options["offset"] = this.prevSticky.options["offset"] + prevMeasurer.offsetHeight + this.prevSticky.mt + this.prevSticky.mb;
-					var prevEl = this;
-					while((prevEl = prevEl.prevSticky)){
-						prevEl.restrictBox.bottom -= (this.height + this.mt + this.mb);
-					}
+		if (this.stack && Sticky.stack[this.stack][this.stackId - 1]){
+			//make offsets for stacked mode
+			var prevSticky = Sticky.stack[this.stack][this.stackId - 1];
+			var prevMeasurer = (prevSticky.isTop ? prevSticky.el : prevSticky.stub);
+			if (this.options["collapse"] && !isOverlap(measureEl, prevMeasurer)){
+				this.options["offset"] = prevSticky.options["offset"];
+			} else {
+				this.options["offset"] = prevSticky.options["offset"] + prevSticky.height + Math.max(prevSticky.mt, prevSticky.mb)//collapsed margin
+				for( var i = this.stackId; i--;){
+					Sticky.stack[this.stack][i].restrictBox.bottom -= (this.height + Math.max(this.mt, this.mb));
 				}
 			}
+		} else if (Sticky.list[this.id - 1]){
+			Sticky.list[this.id - 1].restrictBox.bottom = this.restrictBox.top;
 		}
 		
 		clearTimeout(this._updTimeout);
 		this._updTimeout = setTimeout(this.adjustSizeAndPosition, 0);
 
 		//console.log(this.restrictBox);
-		//console.log(this.prevSticky && this.prevSticky.restrictBox)
 		//console.groupEnd();
 	},
 

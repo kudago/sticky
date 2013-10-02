@@ -29,11 +29,10 @@ var sticky = new Sticky(document.querySelector(".sticky-element"), {/* options *
 ```js
 {
 	offset: 0, //how much pixels to mind from the top
-	restrictWithin: parent, //any element (no-jquery), element selector or bounding box like {top: 0, bottom: 100}
+	restrictWithin: parent, //any element, element selector or bounding box like {top: 0, bottom: 100}
 	vAlign: 'top', //TODO
 	stickyClass: "is-stuck", //class to add when element is sticked
-	stubClass: "sticky-stub", //class to add to the spacer
-	mode: "stacked" //"exclusive" or "stacked"
+	stack: undefined //name of group to stack elements within
 }
 ```
 

@@ -12,5 +12,3 @@
 * Test IE8 empty dataset
 
 * Test prev item hiding
-
-* Make exclusive by default, get rid of modes, intro groups
