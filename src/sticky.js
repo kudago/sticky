@@ -19,7 +19,7 @@ Sticky.prototype = {
 	},
 
 	create: function(el, options){
-		if (el.dataset.stickyId) {
+		if (el.dataset["stickyId"]) {
 			return console.log("Sticky already exist");
 		}
 
@@ -37,10 +37,10 @@ Sticky.prototype = {
 		}
 
 		//cast offset type
-		this.options.offset = parseFloat(this.options.offset) || 0;
+		this.options["offset"] = parseFloat(this.options["offset"]) || 0;
 		
 		//keep list
-		this.el.dataset.stickyId = Sticky.list.length;
+		this.el.dataset["stickyId"] = Sticky.list.length;
 		Sticky.list.push(this);
 
 		//init vars
@@ -61,10 +61,10 @@ Sticky.prototype = {
 
 		//Find stickies siblings within the container
 		var prevEl = this.el;
-		if (this.options.prevSticky) {
-			var prevStickyEl = (typeof this.options.prevSticky === "string") ? document.querySelector(this.options.prevSticky) : this.options.prevSticky;
-			if (prevStickyEl.dataset.stickyId && Sticky.list[prevStickyEl.dataset.stickyId]){
-				this.prevSticky = Sticky.list[prevStickyEl.dataset.stickyId]
+		if (this.options["prevSticky"]) {
+			var prevStickyEl = (typeof this.options["prevSticky"] === "string") ? document.querySelector(this.options["prevSticky"]) : this.options["prevSticky"];
+			if (prevStickyEl.dataset["stickyId"] && Sticky.list[prevStickyEl.dataset["stickyId"]]){
+				this.prevSticky = Sticky.list[prevStickyEl.dataset["stickyId"]]
 				this.prevSticky.nextSticky = this;
 			} else {
 				//TODO: causes infinite lag
@@ -74,10 +74,10 @@ Sticky.prototype = {
 		} else {
 			//find prev stickies between preceding siblings
 			while ((prevEl = prevEl.previousSibling) !== null){
-				if (prevEl.nodeType === 1 && prevEl.dataset.stickyId !== undefined){
-					this.prevSticky = Sticky.list[prevEl.dataset.stickyId];
+				if (prevEl.nodeType === 1 && prevEl.dataset["stickyId"] !== undefined){
+					this.prevSticky = Sticky.list[prevEl.dataset["stickyId"]];
 					this.prevSticky.nextSticky = this;
-					//console.log("found " + prevEl.dataset.stickyId)
+					//console.log("found " + prevEl.dataset["stickyId"])
 					break;
 				}
 			}
@@ -85,7 +85,7 @@ Sticky.prototype = {
 
 		//stub is a spacer filling space when element is stuck
 		this.stub = clone(this.el);
-		this.stub.classList.add(this.options.stubClass);
+		this.stub.classList.add(this.options["stubClass"]);
 		this.stub.style.visibility = "hidden";
 		this.stub.style.display = "none"; 
 		this.parent.insertBefore(this.stub, this.el);
@@ -116,20 +116,20 @@ Sticky.prototype = {
 	//changing state necessity checker
 	check: function(){
 		var vpTop = window.pageYOffset || document.documentElement.scrollTop;
-		//console.log("check:" + this.el.dataset.stickyId, "isFixed:" + this.isFixed, this.restrictBox)
+		//console.log("check:" + this.el.dataset["stickyId"], "isFixed:" + this.isFixed, this.restrictBox)
 		if (this.isFixed){
-			if (!this.isTop && vpTop + this.options.offset + this.height >= this.restrictBox.bottom){
+			if (!this.isTop && vpTop + this.options["offset"] + this.height >= this.restrictBox.bottom){
 				//check bottom parking needed
 				this.parkBottom();
 			}
-			if (!this.isBottom && vpTop + this.options.offset <= this.restrictBox.top){
+			if (!this.isBottom && vpTop + this.options["offset"] <= this.restrictBox.top){
 				//check top parking needed
 				this.parkTop();
 			}
 		} else {
-			if ((this.isTop || this.isBottom) && vpTop + this.options.offset > this.restrictBox.top){
+			if ((this.isTop || this.isBottom) && vpTop + this.options["offset"] > this.restrictBox.top){
 				//fringe violation from top
-				if (vpTop + this.options.offset + this.height < this.restrictBox.bottom){
+				if (vpTop + this.options["offset"] + this.height < this.restrictBox.bottom){
 					//fringe violation from top to the sticking zone
 					this.stick();
 				} else if (!this.isBottom) {
@@ -146,7 +146,7 @@ Sticky.prototype = {
 	parkTop: function(){
 		//this.el = this.parent.removeChild(this.el);
 		this.el.style.cssText = this.initialStyle;
-		this.el.classList.remove(this.options.stickyClass);
+		this.el.classList.remove(this.options["stickyClass"]);
 		//this.stub = this.parent.replaceChild(this.el, this.stub);
 		this.stub.style.display = "none";
 
@@ -176,7 +176,7 @@ Sticky.prototype = {
 
 	//when bottom land needed
 	parkBottom: function(){
-		this.el.classList.remove(this.options.stickyClass);
+		this.el.classList.remove(this.options["stickyClass"]);
 		this.makeParkedBottomStyle(this.el);
 
 		this.isFixed = false;
@@ -199,14 +199,14 @@ Sticky.prototype = {
 	makeStickedStyle: function(el, srcEl){
 		el.style.cssText = this.initialStyle;
 		el.style.position = "fixed";
-		el.style.top = this.options.offset + "px";
-		el.classList.add(this.options.stickyClass);
+		el.style.top = this.options["offset"] + "px";
+		el.classList.add(this.options["stickyClass"]);
 		mimicStyle(el, srcEl || this.stub);
 	},
 
 	//count offset borders, container sizes. Detect needed container size
 	recalc: function(){
-		//console.group("recalc:" + this.el.dataset.stickyId)
+		//console.group("recalc:" + this.el.dataset["stickyId"])
 
 		var measureEl = (this.isTop ? this.el : this.stub);
 
@@ -232,15 +232,15 @@ Sticky.prototype = {
 
 		//make restriction up to next sibling within one container
 		if (this.prevSticky){
-			if (this.options.mode === "exclusive"){
+			if (this.options["mode"] === "exclusive"){
 				this.prevSticky.restrictBox.bottom = this.restrictBox.top;
-			} else if (this.options.mode === "stacked"){
+			} else if (this.options["mode"] === "stacked"){
 				//make offsets for stacked mode
 				var prevMeasurer = (this.prevSticky.isTop ? this.prevSticky.el : this.prevSticky.stub);
-				if (this.options.collapseStacked && !isOverlap(measureEl, prevMeasurer)){
-					this.options.offset = this.prevSticky.options.offset;
+				if (this.options["collapseStacked"] && !isOverlap(measureEl, prevMeasurer)){
+					this.options["offset"] = this.prevSticky.options["offset"];
 				} else {
-					this.options.offset = this.prevSticky.options.offset + prevMeasurer.offsetHeight;
+					this.options["offset"] = this.prevSticky.options["offset"] + prevMeasurer.offsetHeight;
 					var prevEl = this;
 					while((prevEl = prevEl.prevSticky)){
 						prevEl.restrictBox.bottom -= this.height;
