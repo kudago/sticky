@@ -5,6 +5,9 @@ function Sticky(){
 
 //list of instances
 Sticky.list = [];
+//mutually exclusive items
+Sticky.noStack = [];
+//stacks of items
 Sticky.stack = {};
 
 Sticky.prototype = {
@@ -31,7 +34,7 @@ Sticky.prototype = {
 		this.options = extend({}, this.options, el.dataset, options);
 
 		//query selector
-		if ( typeof this.options["restrictWithin"] === "string" ){
+		if ( typeof this.options["restrictWithin"] === "string" && this.options["restrictWithin"].trim() ){
 			this.restrictWithin = document.body.querySelector(this.options["restrictWithin"]);			
 		} else {
 			this.restrictWithin = this.options["restrictWithin"];
@@ -72,6 +75,9 @@ Sticky.prototype = {
 				this.stackId = Sticky.stack[this.stack].length;
 				Sticky.stack[this.stack].push(this)
 			}
+		} else {
+			this.stackId = Sticky.noStack.length;
+			Sticky.noStack.push(this);
 		}
 
 		//stub is a spacer filling space when element is stuck
@@ -118,15 +124,27 @@ Sticky.prototype = {
 				this.parkTop();
 			}
 		} else {
-			if ((this.isTop || this.isBottom) && vpTop + this.options["offset"] + this.mt > this.restrictBox.top){
-				//fringe violation from top
-				if (vpTop + this.options["offset"] + this.height + this.mt + this.mb < this.restrictBox.bottom){
-					//fringe violation from top to the sticking zone
+			if (this.isTop || this.isBottom){
+				if (vpTop + this.options["offset"] + this.mt > this.restrictBox.top){
+					//fringe violation from top
+					if (vpTop + this.options["offset"] + this.height + this.mt + this.mb < this.restrictBox.bottom){
+						//fringe violation from top or bottom to the sticking zone
+						this.stick();
+					} else if (!this.isBottom) {
+						//fringe violation from top lower than bottom
+						//#exclude
+						console.log("double down")
+						//#endexclude
+						this.stick();
+						this.parkBottom();
+					}
+				} else if(this.isBottom){
+					//fringe violation from bottom to higher than top
+					//#exclude
+					console.log("double up")
+					//#endexclude
 					this.stick();
-				} else if (!this.isBottom) {
-					//fringe violation from top lower than bottom
-					this.stick();
-					this.parkBottom();
+					this.parkTop();
 				}
 			}
 		}
@@ -145,7 +163,7 @@ Sticky.prototype = {
 		this.isTop = true;
 		this.isBottom = false;
 		//#if DEV
-		console.log("parkTop")
+		console.log("parkTop", this.id)
 		//#endif
 	},
 	//to make fixed
@@ -161,7 +179,7 @@ Sticky.prototype = {
 		this.isBottom = false;
 
 		//#if DEV
-		console.log("stick")
+		console.log("stick", this.id)
 		//#endif
 	},
 
@@ -174,7 +192,7 @@ Sticky.prototype = {
 		this.isBottom = true;
 		this.isTop = false;
 		//#if DEV
-		console.log("parkBottom")
+		console.log("parkBottom", this.id)
 		//#endif
 	},
 
@@ -198,7 +216,6 @@ Sticky.prototype = {
 	//count offset borders, container sizes. Detect needed container size
 	recalc: function(){
 		//console.group("recalc:" + this.el.dataset["stickyId"])
-		console.log("recalc")
 		var measureEl = (this.isTop ? this.el : this.stub);
 
 		//update parent container size & offsets
@@ -239,8 +256,9 @@ Sticky.prototype = {
 					Sticky.stack[this.stack][i].restrictBox.bottom -= (this.height + Math.max(this.mt, this.mb));
 				}
 			}
-		} else if (Sticky.list[this.id - 1]){
-			Sticky.list[this.id - 1].restrictBox.bottom = this.restrictBox.top;
+		} else if (Sticky.noStack[this.stackId - 1]){
+			var prev = Sticky.noStack[this.stackId - 1];
+			prev.restrictBox.bottom = Math.max(this.restrictBox.top, prev.restrictBox.top + prev.height + prev.mt + prev.mb);
 		}
 		
 		clearTimeout(this._updTimeout);
