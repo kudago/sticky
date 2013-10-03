@@ -6,24 +6,26 @@ body{
 	padding: 50px 0 500px;
 }
 .sticky{
-	outline: 1px solid red;
-	background: rgba(255,255,255,1);
+	background: rgba(0,0,205, .2);
+
 }
 .side-column{	
 	width: 200px;
 	float: left;
 	height: 400px;
+	outline: 1px dashed rgba(0,0,205,.1);
 }
 .side-column .sticky{
 	min-height: 100px;
+	margin: 10px 0 0px;
 }
 .main-column{
-	outline: 1px solid blue;
+	outline: 1px dashed rgba(0,0,205,.5);
 	overflow: hidden;
 	margin-left: 200px;
-	margin-bottom: 800px;
+	margin-bottom: 100px;
 }
-.recalc{
+.button{
 	position: fixed;
 	background: black;
 	color: white;
@@ -31,51 +33,47 @@ body{
 	top: 50%;
 	width: 40px;
 	height: 40px;
-	margin-top: -20px;
 	cursor: pointer;
 	text-align: center;
 	line-height: 40px;
 	font-size: 28px;
 	border-radius: 4px;
 }
+.button.recalc{
+	margin-top: -50px;
+}
+.button.delete{
+	margin-top: 50px;
+}
+.is-stuck{
+	background: rgba(205,0,0, .2);
+}
 </style>
 
-<h1>Mutually exclusive mode test</h1>
+<h1>Stacked mode test</h1>
 
-
-<div class="sticky" id="pre-sticker" style="width: 300px; padding: 10px; z-index:99;" data-restrict-within=".main-column" data-prev-sticky="#pre-sticker-none">Pre-sticky</div>
-<div class="" id="pre-sticker-none" style="width: 300px; padding: 10px; position:absolute; right:0; top:0; outline:1px dashed red;">Pre-sticky no-init</div>
+<div class="sticky-2" id="pre-sticky" style="width: 300px; padding: 10px" data-restrict-within=".main-column" data-stack="main, aside">Pre-sticky</div>
 
 <div class="side-column">
-	<div class="sticky" data-restrict-within=".main-column" data-mode="exclusive">Side 1</div>
-	<div class="sticky" data-restrict-within=".main-column" data-mode="exclusive">Side 2</div>
-	<div class="sticky" data-restrict-within=".main-column" data-mode="exclusive">Side 3</div>
+	<div class="sticky" data-restrict-within=".main-column" data-stack="aside">Side stacked 0</div>
+	<div class="sticky" data-restrict-within=".main-column" data-stack="aside">Side stacked 1</div>
+	<div class="sticky" data-restrict-within=".main-column" data-stack="aside">Side stacked 2</div>
 </div>
 
 <div class="main-column">
-	<div class="sticky" data-offset="0" data-prev-sticky="#pre-sticker">Sticky header</div>
+	<div class="sticky" style="margin-top: 10px; padding: 10px">Sticky header</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
-	<div class="sticky" style="padding: 10px">Another sticky</div>
-	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
-	<p>Cras mattis consectetur purus sit amet fermentum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus mollis interdum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam quis risus eget urna mollis ornare vel eu leo. Curabitur blandit tempus porttitor. Donec id elit non mi porta gravida at eget metus.
-
-	Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Donec sed odio dui. Maecenas faucibus mollis interdum. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.</p>
-	<div class="sticky">Another sticky</div>
-
-	<p>Etiam porta sem malesuada magna mollis euismod. Donec id elit non mi porta gravida at eget metus. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Curabitur blandit tempus porttitor.
-
-	Sed posuere consectetur est at lobortis. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor.</p>
-	<div class="sticky">Another sticky</div>
+	<div class="sticky" style="position:absolute; right:0; left:auto; margin-top: 10px; padding: 10px; margin-right:20px;">Another sticky</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
 	<p>Cras mattis consectetur purus sit amet fermentum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas faucibus mollis interdum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Nullam quis risus eget urna mollis ornare vel eu leo. Curabitur blandit tempus porttitor. Donec id elit non mi porta gravida at eget metus.
 
 	Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Donec sed odio dui. Maecenas faucibus mollis interdum. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.</p>
-	<div class="sticky">Another sticky</div>
+	<div class="sticky" style="position: absolute; left: 0; margin-bottom: 10px; padding:10px; margin-left:20px;">Another sticky</div>
 
 	<p>Etiam porta sem malesuada magna mollis euismod. Donec id elit non mi porta gravida at eget metus. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Curabitur blandit tempus porttitor.
 
 	Sed posuere consectetur est at lobortis. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur blandit tempus porttitor.</p>
-	<div class="sticky">Last sticky</div>
+	<div class="sticky" style="margin: 0 auto; width: 20%">Last sticky</div>
 	<p>Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Morbi leo risus, porta ac consectetur ac, vestibulum at eros. Vestibulum id ligula porta felis euismod semper. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Donec sed odio dui. Nullam id dolor id nibh ultricies vehicula ut id elit.
 
 	Donec ullamcorper nulla non metus auctor fringilla. Etiam porta sem malesuada magna mollis euismod. Maecenas sed diam eget risus varius blandit sit amet non magna. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Cras mattis consectetur purus sit amet fermentum.
@@ -85,22 +83,23 @@ body{
 	Sed posuere consectetur est at lobortis. Praesent commodo cursus magna, vel scelerisque nisl consectetur et. Nullam quis risus eget urna mollis ornare vel eu leo. Cras justo odio, dapibus ac facilisis in, egestas eget quam. Duis mollis, est non commodo luctus, nisi erat porttitor ligula, eget lacinia odio sem nec elit.</p>
 </div>
 
-<div class="recalc" title="recalc">❄</div>
+<div class="recalc button" title="recalc">❄</div>
+<div class="delete button" title="delete">✂</div>
+<div class="add button" title="add">+</div>
 
-<script src="http://cdnjs.cloudflare.com/ajax/libs/zepto/1.0/zepto.js"></script>
 
 <script src="../src/utils.js"></script>
 <script src="../src/sticky.js"></script>
 <script src="../src/jquery.sticky.js"></script>
-<!--<script type="text/javascript" src="../sticky.min.js"></script>-->
 
+<!--<script type="text/javascript" src="../sticky.min.js"></script>-->
 <script type="text/javascript">
 	/*$(".sticky").sticky();
 
 	$(".recalc").click(function(){
 		$(document).trigger("sticky:recalc");
 	})*/
-
+	
 	var set = document.querySelectorAll(".sticky");
 	for (var i = 0; i < set.length; i++){
 		new Sticky(set[i]);
@@ -109,4 +108,21 @@ body{
 	document.querySelector(".recalc").addEventListener("click", function(){
 		document.dispatchEvent(new CustomEvent("sticky:recalc"))
 	})
+
+	document.querySelector(".add").addEventListener("click", function(){
+
+	})
+
+	document.querySelector(".delete").addEventListener("click", function(){
+
+	})
+
+	/*setTimeout(function(){
+		console.log("------------Initial")
+		for (var i = 0; i < Sticky.list.length; i++){
+			var el = Sticky.list[i];
+			console.log(el.stack[0], el.stackId[0], el.restrictBox, el.offset);
+		}
+	}, 100)*/
+
 </script>

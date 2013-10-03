@@ -250,8 +250,8 @@ Sticky.prototype = {
 
 		//make restriction up to next sibling within one container
 		this.offset.bottom = 0;
+		var prevSticky;
 		if (this.stack.length){
-			var prevSticky;
 			for (var i = this.stack.length; i--;){
 				if (prevSticky = Sticky.stack[this.stack[i]][this.stackId[i] - 1]){
 					//make offsets for stacked mode
@@ -260,18 +260,16 @@ Sticky.prototype = {
 					if (!(this.options["collapse"] && !isOverlap(measureEl, prevMeasurer))) {
 					 	this.offset.top += prevSticky.height + Math.max(prevSticky.mt, prevSticky.mb)//collapsed margin
 					 	var nextSticky = Sticky.stack[this.stack[i]][this.stackId[i]];
+						//multistacking-way of correcting bottom offsets
 						for( var j = this.stackId[i] - 1; (prevSticky = Sticky.stack[this.stack[i]][j]); j--){
-							//TODO: ignore subtracting height, if element is already higher than needed (for multistacking)
-							//this.height + Math.max(this.mt, this.mb)
 							prevSticky.offset.bottom = Math.max(prevSticky.offset.bottom, nextSticky.offset.bottom + nextSticky.height + nextSticky.mt + nextSticky.mb);
 							nextSticky = prevSticky;
 						}
 					}
 				}
 			}
-		} else if (Sticky.noStack[this.stackId[i] - 1]){
-			var prev = Sticky.noStack[this.stackId[i] - 1];
-			this.offset.bottom += Math.max(this.restrictBox.top, prev.restrictBox.top + prev.height + prev.mt + prev.mb);
+		} else if (prevSticky = Sticky.noStack[this.stackId[0] - 1]){
+			prevSticky.restrictBox.bottom = this.restrictBox.top - this.mt;
 		}
 		
 		clearTimeout(this._updTimeout); 
