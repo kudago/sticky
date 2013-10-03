@@ -39,9 +39,6 @@ Sticky.prototype = {
 		} else {
 			this.restrictWithin = this.options["restrictWithin"];
 		}
-
-		//cast offset type
-		this.options["offset"] = parseFloat(this.options["offset"]) || 0;
 		
 		//keep list
 		this.el.dataset["stickyId"] = Sticky.list.length;
@@ -63,22 +60,30 @@ Sticky.prototype = {
 			top: 0,
 			height: 0
 		}
+		//mind gap from bottom & top in addition to restrictBox (for stacks)
+		this.offset = {
+			top: parseFloat(this.options["offset"]) || 0,
+			bottom: 0
+		}
 
 		//Detect whether stacking needed
 		var prevEl = this.el;
+		this.stackId = [];
+		this.stack = [];
 		if (this.options["stack"]) {
-			this.stack = this.options["stack"];
-			if (!Sticky.stack[this.stack]){
-				Sticky.stack[this.stack] = [this]
-				this.stackId = 0
-			} else {
-				this.stackId = Sticky.stack[this.stack].length;
-				Sticky.stack[this.stack].push(this)
+			var stack = this.options["stack"].split(",");
+			for (var i = stack.length; i--;){
+				stack[i] = stack[i].trim();
+				if (!Sticky.stack[stack[i]]) Sticky.stack[stack[i]] = [];
+				this.stackId[i] = Sticky.stack[stack[i]].length;
+				this.stack.push(stack[i]);
+				Sticky.stack[stack[i]].push(this)
 			}
 		} else {
-			this.stackId = Sticky.noStack.length;
+			this.stackId[0] = Sticky.noStack.length;
 			Sticky.noStack.push(this);
 		}
+
 
 		//stub is a spacer filling space when element is stuck
 		this.stub = clone(this.el);
@@ -115,19 +120,19 @@ Sticky.prototype = {
 		var vpTop = window.pageYOffset || document.documentElement.scrollTop;
 		//console.log("check:" + this.el.dataset["stickyId"], "isFixed:" + this.isFixed, this.restrictBox)
 		if (this.isFixed){
-			if (!this.isTop && vpTop + this.options["offset"] + this.height + this.mt + this.mb >= this.restrictBox.bottom){
+			if (!this.isTop && vpTop + this.offset.top + this.height + this.mt + this.mb >= this.restrictBox.bottom - this.offset.bottom){
 				//check bottom parking needed
 				this.parkBottom();
 			}
-			if (!this.isBottom && vpTop + this.options["offset"] + this.mt <= this.restrictBox.top){
+			if (!this.isBottom && vpTop + this.offset.top + this.mt <= this.restrictBox.top){
 				//check top parking needed
 				this.parkTop();
 			}
 		} else {
 			if (this.isTop || this.isBottom){
-				if (vpTop + this.options["offset"] + this.mt > this.restrictBox.top){
+				if (vpTop + this.offset.top + this.mt > this.restrictBox.top){
 					//fringe violation from top
-					if (vpTop + this.options["offset"] + this.height + this.mt + this.mb < this.restrictBox.bottom){
+					if (vpTop + this.offset.top + this.height + this.mt + this.mb < this.restrictBox.bottom - this.offset.bottom){
 						//fringe violation from top or bottom to the sticking zone
 						this.stick();
 					} else if (!this.isBottom) {
@@ -200,7 +205,7 @@ Sticky.prototype = {
 	makeParkedBottomStyle: function(el){
 		el.style.cssText = this.initialStyle;
 		el.style.position = "absolute";
-		el.style.top = this.restrictBox.bottom - this.parentBox.top - this.height - this.mt - this.mb + "px";
+		el.style.top = this.restrictBox.bottom - this.offset.bottom - this.parentBox.top - this.height - this.mt - this.mb + "px";
 		mimicStyle(el, this.stub);
 		el.style.left = this.stub.offsetLeft + "px";
 	},
@@ -208,7 +213,7 @@ Sticky.prototype = {
 	makeStickedStyle: function(el, srcEl){
 		el.style.cssText = this.initialStyle;
 		el.style.position = "fixed";
-		el.style.top = this.options["offset"] + "px";
+		el.style.top = this.offset.top + "px";
 		el.classList.add(this.options["stickyClass"]);
 		mimicStyle(el, srcEl || this.stub);
 	},
@@ -244,28 +249,34 @@ Sticky.prototype = {
 		}
 
 		//make restriction up to next sibling within one container
-		if (this.stack && Sticky.stack[this.stack][this.stackId - 1]){
-			//make offsets for stacked mode
-			var prevSticky = Sticky.stack[this.stack][this.stackId - 1];
-			var prevMeasurer = (prevSticky.isTop ? prevSticky.el : prevSticky.stub);
-			if (this.options["collapse"] && !isOverlap(measureEl, prevMeasurer)){
-				this.options["offset"] = prevSticky.options["offset"];
-			} else {
-				this.options["offset"] = prevSticky.options["offset"] + prevSticky.height + Math.max(prevSticky.mt, prevSticky.mb)//collapsed margin
-				for( var i = this.stackId; i--;){
-					Sticky.stack[this.stack][i].restrictBox.bottom -= (this.height + Math.max(this.mt, this.mb));
+		this.offset.bottom = 0;
+		if (this.stack.length){
+			var prevSticky;
+			for (var i = this.stack.length; i--;){
+				if (prevSticky = Sticky.stack[this.stack[i]][this.stackId[i] - 1]){
+					//make offsets for stacked mode
+					var prevMeasurer = (prevSticky.isTop ? prevSticky.el : prevSticky.stub);
+					this.offset.top = prevSticky.offset.top;
+					if (!(this.options["collapse"] && !isOverlap(measureEl, prevMeasurer))) {
+					 	this.offset.top += prevSticky.height + Math.max(prevSticky.mt, prevSticky.mb)//collapsed margin
+					 	var nextSticky = Sticky.stack[this.stack[i]][this.stackId[i]];
+						for( var j = this.stackId[i] - 1; (prevSticky = Sticky.stack[this.stack[i]][j]); j--){
+							//TODO: ignore subtracting height, if element is already higher than needed (for multistacking)
+							//this.height + Math.max(this.mt, this.mb)
+							prevSticky.offset.bottom = Math.max(prevSticky.offset.bottom, nextSticky.offset.bottom + nextSticky.height + nextSticky.mt + nextSticky.mb);
+							nextSticky = prevSticky;
+						}
+					}
 				}
 			}
-		} else if (Sticky.noStack[this.stackId - 1]){
-			var prev = Sticky.noStack[this.stackId - 1];
-			prev.restrictBox.bottom = Math.max(this.restrictBox.top, prev.restrictBox.top + prev.height + prev.mt + prev.mb);
+		} else if (Sticky.noStack[this.stackId[i] - 1]){
+			var prev = Sticky.noStack[this.stackId[i] - 1];
+			this.offset.bottom += Math.max(this.restrictBox.top, prev.restrictBox.top + prev.height + prev.mt + prev.mb);
 		}
 		
-		clearTimeout(this._updTimeout);
+		clearTimeout(this._updTimeout); 
 		this._updTimeout = setTimeout(this.adjustSizeAndPosition, 0);
-
-		//console.log(this.restrictBox);
-		//console.groupEnd();
+		console.groupEnd();
 	},
 
 	adjustSizeAndPosition: function(){
