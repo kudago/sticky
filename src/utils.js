@@ -55,7 +55,7 @@ function mimicStyle(to, from){
 
 	to.style.width = (stubOffset.width - pl - pr) + "px";
 	to.style.left = stubOffset.left + "px";
-	to.style["margin-left"] = 0;
+	to.style.marginLeft = 0;
 	for (var i = 0; i < mimicProperties.length; i++){
 		for (var j = 0; j < directions.length; j++){
 			var prop = mimicProperties[i] + directions[j];

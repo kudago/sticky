@@ -52,7 +52,7 @@
         }
         to.style.width = stubOffset.width - pl - pr + "px";
         to.style.left = stubOffset.left + "px";
-        to.style["margin-left"] = 0;
+        to.style.marginLeft = 0;
         for (var i = 0; i < mimicProperties.length; i++) {
             for (var j = 0; j < directions.length; j++) {
                 var prop = mimicProperties[i] + directions[j];
@@ -98,7 +98,7 @@
             collapse: true
         },
         create: function(el, options) {
-            if (el.dataset["stickyId"]) {
+            if (el.dataset && el.dataset["stickyId"]) {
                 return console.log("Sticky already exist");
             }
             this.el = el;
@@ -112,6 +112,8 @@
                 this.restrictWithin = this.options["restrictWithin"];
             }
             //keep list
+            if (!this.el.dataset) this.el.dataset = {};
+            //TODO: move out to polyfill
             this.el.dataset["stickyId"] = Sticky.list.length;
             this.id = Sticky.list.length;
             Sticky.list.push(this);
@@ -307,7 +309,6 @@
             }
             clearTimeout(this._updTimeout);
             this._updTimeout = setTimeout(this.adjustSizeAndPosition, 0);
-            console.groupEnd();
         },
         adjustSizeAndPosition: function() {
             if (this.isTop) {

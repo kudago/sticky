@@ -29,7 +29,7 @@ Sticky.prototype = {
 	},
 
 	create: function(el, options){
-		if (el.dataset["stickyId"]) {
+		if (el.dataset && el.dataset["stickyId"]) {
 			return console.log("Sticky already exist");
 		}
 
@@ -47,6 +47,7 @@ Sticky.prototype = {
 		}
 		
 		//keep list
+		if (!this.el.dataset) this.el.dataset = {}; //TODO: move out to polyfill
 		this.el.dataset["stickyId"] = Sticky.list.length;
 		this.id = Sticky.list.length;
 		Sticky.list.push(this);
@@ -281,7 +282,7 @@ Sticky.prototype = {
 		
 		clearTimeout(this._updTimeout); 
 		this._updTimeout = setTimeout(this.adjustSizeAndPosition, 0);
-		console.groupEnd();
+		//console.groupEnd();
 	},
 
 	adjustSizeAndPosition: function(){
