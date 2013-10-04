@@ -114,7 +114,8 @@ body{
 	})
 
 	document.querySelector(".delete").addEventListener("click", function(){
-
+		var elToRemove = document.querySelector(".sticky:not(.sticky-stub)");
+		elToRemove.parentNode.removeChild(elToRemove);
 	})
 
 	/*setTimeout(function(){

@@ -68,8 +68,9 @@ Sticky.prototype = {
 			height: 0
 		}
 		//mind gap from bottom & top in addition to restrictBox (for stacks)
+		this.options.offset = parseFloat(this.options["offset"]) || 0;
 		this.offset = {
-			top: parseFloat(this.options["offset"]) || 0,
+			top: 0,
 			bottom: 0
 		}
 
@@ -110,6 +111,7 @@ Sticky.prototype = {
 		//bind methods
 		this.check = this.check.bind(this);
 		this.recalc = this.recalc.bind(this);
+		this.disable = this.disable.bind(this);
 		this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
 
 		this.recalc();
@@ -117,9 +119,16 @@ Sticky.prototype = {
 		//bind events
 		document.addEventListener("scroll", this.check);
 		window.addEventListener("resize", this.recalc);
+		this.el.addEventListener("DOMNodeRemoved", this.disable);
 
 		//API events
 		document.addEventListener("sticky:recalc", this.recalc);
+	},
+
+	//when element removed etc
+	disable: function(){
+		this.parent.removeChild(this.stub);
+		document.dispatchEvent(new CustomEvent("sticky:recalc"))
 	},
 
 	//changing state necessity checker
@@ -127,17 +136,17 @@ Sticky.prototype = {
 		var vpTop = window.pageYOffset || document.documentElement.scrollTop;
 		//console.log("check:" + this.el.dataset["stickyId"], "isFixed:" + this.isFixed, this.restrictBox)
 		if (this.isFixed){
-			if (!this.isTop && vpTop + this.offset.top + this.height + this.mt + this.mb >= this.restrictBox.bottom - this.offset.bottom){
+			if (!this.isTop && vpTop + this.offset.top + this.options.offset + this.height + this.mt + this.mb >= this.restrictBox.bottom - this.offset.bottom){
 				//check bottom parking needed
 				this.parkBottom();
 			}
-			if (!this.isBottom && vpTop + this.offset.top + this.mt <= this.restrictBox.top){
+			if (!this.isBottom && vpTop + this.offset.top + this.options.offset + this.mt <= this.restrictBox.top){
 				//check top parking needed
 				this.parkTop();
 			}
 		} else {
 			if (this.isTop || this.isBottom){
-				if (vpTop + this.offset.top + this.mt > this.restrictBox.top){
+				if (vpTop + this.offset.top + this.options.offset + this.mt > this.restrictBox.top){
 					//fringe violation from top
 					if (vpTop + this.offset.top + this.height + this.mt + this.mb < this.restrictBox.bottom - this.offset.bottom){
 						//fringe violation from top or bottom to the sticking zone
@@ -178,6 +187,7 @@ Sticky.prototype = {
 		console.log("parkTop", this.id)
 		//#endif
 	},
+
 	//to make fixed
 	//enhanced replace: faked visual stub is fastly replaced with natural one
 	stick: function(){
@@ -256,9 +266,9 @@ Sticky.prototype = {
 		}
 
 		//make restriction up to next sibling within one container
+		var prevSticky;
 		this.offset.bottom = 0;
 		this.offset.top = 0;
-		var prevSticky;
 		if (this.stack.length){
 			for (var i = this.stack.length; i--;){
 				if (prevSticky = Sticky.stack[this.stack[i]][this.stackId[i] - 1]){
