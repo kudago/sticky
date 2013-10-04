@@ -64,7 +64,7 @@ module.exports = function(grunt) {
 				jsOutputFile: '<%= pkg.name %>.min.js',
 				maxBuffer: 800,
 				options: {
-					compilation_level: 'SIMPLE_OPTIMIZATIONS',//'ADVANCED_OPTIMIZATIONS',
+					compilation_level: 'ADVANCED_OPTIMIZATIONS',//'ADVANCED_OPTIMIZATIONS',
 					language_in: 'ECMASCRIPT5_STRICT',
 					//formatting: 'pretty_print'
 				}

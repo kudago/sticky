@@ -11,14 +11,20 @@ Sticky.noStack = [];
 Sticky.stack = {};
 
 Sticky.prototype = {
-	/** @expose */
 	options: {
+		/** @expose */
 		"offset": 0,
+		/** @expose */
 		"restrictWithin": null, //element or bounding box
+		/** @expose */
 		"vAlign": 'top',
+		/** @expose */
 		"stickyClass": "is-stuck",
+		/** @expose */
 		"stubClass": "sticky-stub",
+		/** @expose */
 		"stack": null,
+		/** @expose */
 		"collapse": true
 	},
 
@@ -250,6 +256,7 @@ Sticky.prototype = {
 
 		//make restriction up to next sibling within one container
 		this.offset.bottom = 0;
+		this.offset.top = 0;
 		var prevSticky;
 		if (this.stack.length){
 			for (var i = this.stack.length; i--;){
