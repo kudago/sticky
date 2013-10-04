@@ -62,6 +62,7 @@ Sticky.prototype = {
 		};
 		//self position & size
 		this.height = 0;
+		this.isDisabled = false;
 		//parent position & size
 		this.parentBox = {
 			top: 0,
@@ -97,7 +98,7 @@ Sticky.prototype = {
 		this.stub = clone(this.el);
 		this.stub.classList.add(this.options["stubClass"]);
 		this.stub.style.visibility = "hidden";
-		this.stub.style.display = "none"; 
+		this.stub.style.display = "none";
 		this.parent.insertBefore(this.stub, this.el);
 
 		//save initial inline style
@@ -112,23 +113,47 @@ Sticky.prototype = {
 		this.check = this.check.bind(this);
 		this.recalc = this.recalc.bind(this);
 		this.disable = this.disable.bind(this);
+		this.enable = this.enable.bind(this);
+		this.bindEvents = this.bindEvents.bind(this);
 		this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
 
 		this.recalc();
 
-		//bind events
-		document.addEventListener("scroll", this.check);
-		window.addEventListener("resize", this.recalc);
-		this.el.addEventListener("DOMNodeRemoved", this.disable);
+		this.bindEvents();
 
 		//API events
 		document.addEventListener("sticky:recalc", this.recalc);
+		this.el.addEventListener("sticky:disable", this.disable);
+		this.el.addEventListener("sticky:enable", this.enable);
 	},
 
-	//when element removed etc
+	//when element removed or made hidden.
+	/** @expose */
 	disable: function(){
 		this.parent.removeChild(this.stub);
+		this.unbindEvents();
+		this.isDisabled = true;
 		document.dispatchEvent(new CustomEvent("sticky:recalc"))
+	},
+
+	//enables previously disabled element	
+	/** @expose */
+	enable: function(){
+		this.parent.insertBefore(this.stub, this.el);
+		this.isDisabled = false;
+		this.bindEvents();
+	},
+
+	bindEvents: function(){
+		document.addEventListener("scroll", this.check);
+		window.addEventListener("resize", this.recalc);
+		this.el.addEventListener("DOMNodeRemoved", this.disable);
+	},
+
+	unbindEvents: function(){			
+		document.addEventListener("scroll", this.check);
+		window.addEventListener("resize", this.recalc);
+		this.el.addEventListener("DOMNodeRemoved", this.disable);
 	},
 
 	//changing state necessity checker
@@ -244,7 +269,7 @@ Sticky.prototype = {
 		this.parentBox = getBoundingOffsetRect(this.parent);
 
 		//update self size & position
-		this.height = measureEl.offsetHeight;
+		this.height = this.el.offsetHeight;
 		var mStyle = getComputedStyle(measureEl);
 		this.ml = ~~mStyle.marginLeft.slice(0,-2);
 		this.mr = ~~mStyle.marginRight.slice(0,-2);

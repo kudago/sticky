@@ -1,6 +1,9 @@
 <meta charset="utf-8">
 <script src="a.js"></script>
 <style type="text/css">
+[hidden]{
+	display: none!important;
+}
 body{
 	margin: 20px;
 	padding: 50px 0 500px;
@@ -45,6 +48,9 @@ body{
 .button.delete{
 	margin-top: 50px;
 }
+.button.hide{
+	margin-top: 100px;
+}
 .is-stuck{
 	background: rgba(205,0,0, .2);
 }
@@ -86,6 +92,7 @@ body{
 <div class="recalc button" title="recalc">❄</div>
 <div class="delete button" title="delete">✂</div>
 <div class="add button" title="add">+</div>
+<div class="hide button" title="hide">✖</div>
 
 
 <script src="../src/utils.js"></script>
@@ -116,6 +123,12 @@ body{
 	document.querySelector(".delete").addEventListener("click", function(){
 		var elToRemove = document.querySelector(".sticky:not(.sticky-stub)");
 		elToRemove.parentNode.removeChild(elToRemove);
+	})
+
+	document.querySelector(".hide").addEventListener("click", function(){
+		var elToHide = document.querySelector(".sticky:not(.sticky-stub)");
+		elToHide.hidden = true;		
+		elToHide.dispatchEvent(new CustomEvent("sticky:disable"))
 	})
 
 	/*setTimeout(function(){

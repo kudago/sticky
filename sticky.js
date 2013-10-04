@@ -127,6 +127,7 @@
             };
             //self position & size
             this.height = 0;
+            this.isDisabled = false;
             //parent position & size
             this.parentBox = {
                 top: 0,
@@ -171,19 +172,40 @@
             this.check = this.check.bind(this);
             this.recalc = this.recalc.bind(this);
             this.disable = this.disable.bind(this);
+            this.enable = this.enable.bind(this);
+            this.bindEvents = this.bindEvents.bind(this);
             this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
             this.recalc();
-            //bind events
+            this.bindEvents();
+            //API events
+            document.addEventListener("sticky:recalc", this.recalc);
+            this.el.addEventListener("sticky:disable", this.disable);
+            this.el.addEventListener("sticky:enable", this.enable);
+        },
+        //when element removed or made hidden.
+        /** @expose */
+        disable: function() {
+            this.parent.removeChild(this.stub);
+            this.unbindEvents();
+            this.isDisabled = true;
+            document.dispatchEvent(new CustomEvent("sticky:recalc"));
+        },
+        //enables previously disabled element	
+        /** @expose */
+        enable: function() {
+            this.parent.insertBefore(this.stub, this.el);
+            this.isDisabled = false;
+            this.bindEvents();
+        },
+        bindEvents: function() {
             document.addEventListener("scroll", this.check);
             window.addEventListener("resize", this.recalc);
             this.el.addEventListener("DOMNodeRemoved", this.disable);
-            //API events
-            document.addEventListener("sticky:recalc", this.recalc);
         },
-        //when element removed etc
-        disable: function() {
-            this.parent.removeChild(this.stub);
-            document.dispatchEvent(new CustomEvent("sticky:recalc"));
+        unbindEvents: function() {
+            document.addEventListener("scroll", this.check);
+            window.addEventListener("resize", this.recalc);
+            this.el.addEventListener("DOMNodeRemoved", this.disable);
         },
         //changing state necessity checker
         check: function() {
@@ -271,7 +293,7 @@
             //update parent container size & offsets
             this.parentBox = getBoundingOffsetRect(this.parent);
             //update self size & position
-            this.height = measureEl.offsetHeight;
+            this.height = this.el.offsetHeight;
             var mStyle = getComputedStyle(measureEl);
             this.ml = ~~mStyle.marginLeft.slice(0, -2);
             this.mr = ~~mStyle.marginRight.slice(0, -2);
