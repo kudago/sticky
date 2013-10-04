@@ -128,7 +128,6 @@ Sticky.prototype = {
 	},
 
 	//when element removed or made hidden.
-	/** @expose */
 	disable: function(){
 		this.parent.removeChild(this.stub);
 		this.unbindEvents();
@@ -136,8 +135,7 @@ Sticky.prototype = {
 		document.dispatchEvent(new CustomEvent("sticky:recalc"))
 	},
 
-	//enables previously disabled element	
-	/** @expose */
+	//enables previously disabled element
 	enable: function(){
 		this.parent.insertBefore(this.stub, this.el);
 		this.isDisabled = false;
@@ -173,7 +171,7 @@ Sticky.prototype = {
 			if (this.isTop || this.isBottom){
 				if (vpTop + this.offset.top + this.options.offset + this.mt > this.restrictBox.top){
 					//fringe violation from top
-					if (vpTop + this.offset.top + this.height + this.mt + this.mb < this.restrictBox.bottom - this.offset.bottom){
+					if (vpTop + this.offset.top + this.options.offset + this.height + this.mt + this.mb < this.restrictBox.bottom - this.offset.bottom){
 						//fringe violation from top or bottom to the sticking zone
 						this.stick();
 					} else if (!this.isBottom) {
@@ -255,7 +253,7 @@ Sticky.prototype = {
 	makeStickedStyle: function(el, srcEl){
 		el.style.cssText = this.initialStyle;
 		el.style.position = "fixed";
-		el.style.top = this.offset.top + "px";
+		el.style.top = this.offset.top + this.options.offset + "px";
 		el.classList.add(this.options["stickyClass"]);
 		mimicStyle(el, srcEl || this.stub);
 	},
@@ -299,7 +297,7 @@ Sticky.prototype = {
 				if (prevSticky = Sticky.stack[this.stack[i]][this.stackId[i] - 1]){
 					//make offsets for stacked mode
 					var prevMeasurer = (prevSticky.isTop ? prevSticky.el : prevSticky.stub);
-					this.offset.top = prevSticky.offset.top;
+					this.offset.top = prevSticky.offset.top + prevSticky.options.offset;
 					if (!(this.options["collapse"] && !isOverlap(measureEl, prevMeasurer))) {
 					 	this.offset.top += prevSticky.height + Math.max(prevSticky.mt, prevSticky.mb)//collapsed margin
 					 	var nextSticky = Sticky.stack[this.stack[i]][this.stackId[i]];
