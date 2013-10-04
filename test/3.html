@@ -67,7 +67,7 @@ body{
 </div>
 
 <div class="main-column">
-	<div class="sticky" data-stack="main" style="margin-top: 10px; padding: 10px">Sticky header</div>
+	<div class="sticky" data-stack="main" style="margin-top: 10px; padding: 10px" hidden>Sticky header</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
 	<div class="sticky" data-stack="main" style="position:absolute; right:0; left:auto; margin-top: 10px; padding: 10px; margin-right:20px;">Another sticky</div>
 	<p>Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.</p>
@@ -95,11 +95,11 @@ body{
 <div class="hide button" title="hide">✖</div>
 
 
-<script src="../src/utils.js"></script>
+<!--<script src="../src/utils.js"></script>
 <script src="../src/sticky.js"></script>
-<script src="../src/jquery.sticky.js"></script>
+<script src="../src/jquery.sticky.js"></script>-->
 
-<!--<script type="text/javascript" src="../sticky.min.js"></script>-->
+<script type="text/javascript" src="../sticky.min.js"></script>
 <script type="text/javascript">
 	/*$(".sticky").sticky();
 
@@ -112,23 +112,24 @@ body{
 		new Sticky(set[i]);
 	}
 
+	var targetEl = document.querySelector(".main-column .sticky:not(.sticky-stub)"),
+		parentEl = targetEl.parentNode;
+
 	document.querySelector(".recalc").addEventListener("click", function(){
 		document.dispatchEvent(new CustomEvent("sticky:recalc"))
 	})
 
-	document.querySelector(".add").addEventListener("click", function(){
-
+	document.querySelector(".add").addEventListener("click", function(){		
+		parentEl.insertBefore(targetEl, parentEl.firstChild);
 	})
 
 	document.querySelector(".delete").addEventListener("click", function(){
-		var elToRemove = document.querySelector(".sticky:not(.sticky-stub)");
-		elToRemove.parentNode.removeChild(elToRemove);
+		parentEl.removeChild(targetEl);
 	})
 
-	document.querySelector(".hide").addEventListener("click", function(){
-		var elToHide = document.querySelector(".sticky:not(.sticky-stub)");
-		elToHide.hidden = true;		
-		elToHide.dispatchEvent(new CustomEvent("sticky:disable"))
+	document.querySelector(".hide").addEventListener("click", function(){		
+		targetEl.removeAttribute("hidden");
+		targetEl.dispatchEvent(new CustomEvent("sticky:enable"))
 	})
 
 	/*setTimeout(function(){

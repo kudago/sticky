@@ -29,7 +29,7 @@ Sticky.prototype = {
 	},
 
 	create: function(el, options){
-		if (el.dataset && el.dataset["stickyId"]) {
+		if (el.getAttribute("data-sticky-id") === undefined) {
 			return console.log("Sticky already exist");
 		}
 
@@ -37,7 +37,15 @@ Sticky.prototype = {
 		this.parent = this.el.parentNode;
 
 		//recognize attributes
-		this.options = extend({}, this.options, el.dataset, options);
+		var dataset = el.dataset;
+		if (!dataset){
+			dataset = {};
+			if (el.getAttribute("data-restrict-within")) dataset["restrictWithin"] = el.getAttribute("data-restrict-within");
+			if (el.getAttribute("data-offset")) dataset["offset"] = el.getAttribute("data-offset");
+			if (el.getAttribute("data-stack")) dataset["stack"] = el.getAttribute("data-stack");
+			if (el.getAttribute("data-sticky-class")) dataset["stickyClass"] = el.getAttribute("data-sticky-class");
+		}
+		this.options = extend({}, this.options, dataset, options);
 
 		//query selector
 		if ( typeof this.options["restrictWithin"] === "string" && this.options["restrictWithin"].trim() ){
@@ -47,8 +55,7 @@ Sticky.prototype = {
 		}
 		
 		//keep list
-		if (!this.el.dataset) this.el.dataset = {}; //TODO: move out to polyfill
-		this.el.dataset["stickyId"] = Sticky.list.length;
+		this.el.setAttribute("data-sticky-id", Sticky.list.length);
 		this.id = Sticky.list.length;
 		Sticky.list.push(this);
 
@@ -99,7 +106,7 @@ Sticky.prototype = {
 		this.stub.classList.add(this.options["stubClass"]);
 		this.stub.style.visibility = "hidden";
 		this.stub.style.display = "none";
-		this.parent.insertBefore(this.stub, this.el);
+		this.stub.removeAttribute("hidden");
 
 		//save initial inline style
 		this.initialStyle = this.el.style.cssText;
@@ -117,19 +124,24 @@ Sticky.prototype = {
 		this.bindEvents = this.bindEvents.bind(this);
 		this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
 
-		this.recalc();
-
-		this.bindEvents();
-
 		//API events
 		document.addEventListener("sticky:recalc", this.recalc);
+		this.el.addEventListener("sticky:recalc", this.recalc);
+		this.el.addEventListener("DOMNodeRemoved", this.disable);
+		this.el.addEventListener("DOMNodeInserted", this.enable);
 		this.el.addEventListener("sticky:disable", this.disable);
 		this.el.addEventListener("sticky:enable", this.enable);
+
+		if (this.initialDisplay === "none") {
+			this.initialDisplay = "block";
+			this.disable();
+		}
+		else this.enable();
 	},
 
 	//when element removed or made hidden.
 	disable: function(){
-		this.parent.removeChild(this.stub);
+		if (this.stub.parentNode) this.parent.removeChild(this.stub);
 		this.unbindEvents();
 		this.isDisabled = true;
 		document.dispatchEvent(new CustomEvent("sticky:recalc"))
@@ -140,18 +152,18 @@ Sticky.prototype = {
 		this.parent.insertBefore(this.stub, this.el);
 		this.isDisabled = false;
 		this.bindEvents();
+		this.recalc();
+		document.dispatchEvent(new CustomEvent("sticky:recalc"))
 	},
 
 	bindEvents: function(){
 		document.addEventListener("scroll", this.check);
 		window.addEventListener("resize", this.recalc);
-		this.el.addEventListener("DOMNodeRemoved", this.disable);
 	},
 
 	unbindEvents: function(){			
 		document.addEventListener("scroll", this.check);
 		window.addEventListener("resize", this.recalc);
-		this.el.addEventListener("DOMNodeRemoved", this.disable);
 	},
 
 	//changing state necessity checker
