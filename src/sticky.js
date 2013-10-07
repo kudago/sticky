@@ -275,6 +275,9 @@ Sticky.prototype = {
 		//console.group("recalc:" + this.el.dataset["stickyId"])
 		var measureEl = (this.isTop ? this.el : this.stub);
 
+		//update stub content
+		this.stub.innerHTML = this.el.innerHTML;
+
 		//update parent container size & offsets
 		this.parentBox = getBoundingOffsetRect(this.parent);
 
