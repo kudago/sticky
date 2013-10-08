@@ -102,7 +102,7 @@ Sticky.prototype = {
 
 
 		//stub is a spacer filling space when element is stuck
-		this.stub = clone(this.el);
+		this.stub = this.el.cloneNode();
 		this.stub.classList.add(this.options["stubClass"]);
 		this.stub.style.visibility = "hidden";
 		this.stub.style.display = "none";
@@ -277,6 +277,7 @@ Sticky.prototype = {
 
 		//update stub content
 		this.stub.innerHTML = this.el.innerHTML;
+		cleanNode(this.stub);
 
 		//update parent container size & offsets
 		this.parentBox = getBoundingOffsetRect(this.parent);

@@ -22,21 +22,25 @@ function getBoundingOffsetRect(el){
 	return c;
 }
 
-//returns clean clone
-var badTags = ["object", "iframe", "embed", "img"];
-function clone(el){
-	var clone = el.cloneNode(true);
+//removes iframe, objects etc shit
+	var badTags = ["object", "iframe", "embed", "img"];
+function cleanNode(node){
+	node.removeAttribute("id");
+	var idTags = node.querySelectorAll("[id]");
+	for (var k = 0; k < idTags.length; k++){
+		idTags[k].removeAttribute("id"); //avoid any uniqueness
+		idTags[k].removeAttribute("name"); //avoid any uniqueness
+	}
 	for (var i = 0; i < badTags.length; i++){
-		var tags = clone.querySelectorAll(badTags[i]);
+		var tags = node.querySelectorAll(badTags[i]);
 		for (var j = tags.length; j--; ){
+			if (tags[j].tagName === "SCRIPT") tags[j].parentNode.replaceChild(tags[j])
 			tags[j].removeAttribute("src");
 			tags[j].removeAttribute("href");
 			tags[j].removeAttribute("rel");
 			tags[j].removeAttribute("srcdoc");
-			if (tags[j].tagName === "SCRIPT") tags[j].parentNode.replaceChild(tags[j])
 		}
 	}
-	return clone;
 }
 
 

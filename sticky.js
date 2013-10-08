@@ -26,21 +26,26 @@
         c.bottom = window.innerHeight + (window.pageYOffset || document.documentElement.scrollTop) - rect.bottom;
         return c;
     }
-    //returns clean clone
+    //removes iframe, objects etc shit
     var badTags = [ "object", "iframe", "embed", "img" ];
-    function clone(el) {
-        var clone = el.cloneNode(true);
+    function cleanNode(node) {
+        node.removeAttribute("id");
+        var idTags = node.querySelectorAll("[id]");
+        for (var k = 0; k < idTags.length; k++) {
+            idTags[k].removeAttribute("id");
+            //avoid any uniqueness
+            idTags[k].removeAttribute("name");
+        }
         for (var i = 0; i < badTags.length; i++) {
-            var tags = clone.querySelectorAll(badTags[i]);
+            var tags = node.querySelectorAll(badTags[i]);
             for (var j = tags.length; j--; ) {
+                if (tags[j].tagName === "SCRIPT") tags[j].parentNode.replaceChild(tags[j]);
                 tags[j].removeAttribute("src");
                 tags[j].removeAttribute("href");
                 tags[j].removeAttribute("rel");
                 tags[j].removeAttribute("srcdoc");
-                if (tags[j].tagName === "SCRIPT") tags[j].parentNode.replaceChild(tags[j]);
             }
         }
-        return clone;
     }
     var directions = [ "left", "top", "right", "bottom" ], mimicProperties = [ "padding-", "border-" ];
     //copies size-related style of stub
@@ -163,7 +168,7 @@
                 Sticky.noStack.push(this);
             }
             //stub is a spacer filling space when element is stuck
-            this.stub = clone(this.el);
+            this.stub = this.el.cloneNode();
             this.stub.classList.add(this.options["stubClass"]);
             this.stub.style.visibility = "hidden";
             this.stub.style.display = "none";
@@ -301,6 +306,7 @@
             var measureEl = this.isTop ? this.el : this.stub;
             //update stub content
             this.stub.innerHTML = this.el.innerHTML;
+            cleanNode(this.stub);
             //update parent container size & offsets
             this.parentBox = getBoundingOffsetRect(this.parent);
             //update self size & position
