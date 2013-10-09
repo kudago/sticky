@@ -207,7 +207,7 @@
         },
         //enables previously disabled element
         enable: function() {
-            this.parent.insertBefore(this.stub, this.el);
+            if (!this.stub.parentNode) this.parent.insertBefore(this.stub, this.el);
             this.isDisabled = false;
             this.bindEvents();
             this.recalc();
