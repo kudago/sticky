@@ -19,13 +19,18 @@ Sticky.prototype = {
 		/** @expose */
 		"vAlign": 'top',
 		/** @expose */
+		"stubClass": "sticky-stub",
+		/** @expose */
 		"stickyClass": "is-stuck",
 		/** @expose */
-		"stubClass": "sticky-stub",
+		"bottomClass": "is-bottom",
+		/** @expose */
+		"topClass": "is-top",
 		/** @expose */
 		"stack": null,
 		/** @expose */
-		"collapse": true
+		"collapse": true,
+		"recalcInterval": 20
 	},
 
 	create: function(el, options){
@@ -119,6 +124,7 @@ Sticky.prototype = {
 		//bind methods
 		this.check = this.check.bind(this);
 		this.recalc = this.recalc.bind(this);
+		this._recalc = this._recalc.bind(this);
 		this.disable = this.disable.bind(this);
 		this.enable = this.enable.bind(this);
 		this.bindEvents = this.bindEvents.bind(this);
@@ -211,13 +217,14 @@ Sticky.prototype = {
 	parkTop: function(){
 		//this.el = this.parent.removeChild(this.el);
 		this.el.style.cssText = this.initialStyle;
-		this.el.classList.remove(this.options["stickyClass"]);
 		//this.stub = this.parent.replaceChild(this.el, this.stub);
 		this.stub.style.display = "none";
 
 		this.isFixed = false;
 		this.isTop = true;
 		this.isBottom = false;
+		this.updateClasses();
+
 		//#if DEV
 		console.log("parkTop", this.id)
 		//#endif
@@ -234,6 +241,7 @@ Sticky.prototype = {
 		this.isFixed = true;
 		this.isTop = false;
 		this.isBottom = false;
+		this.updateClasses();
 
 		//#if DEV
 		console.log("stick", this.id)
@@ -242,12 +250,13 @@ Sticky.prototype = {
 
 	//when bottom land needed
 	parkBottom: function(){
-		this.el.classList.remove(this.options["stickyClass"]);
 		this.makeParkedBottomStyle(this.el);
 
 		this.isFixed = false;
 		this.isBottom = true;
 		this.isTop = false;
+		this.updateClasses();
+
 		//#if DEV
 		console.log("parkBottom", this.id)
 		//#endif
@@ -266,12 +275,36 @@ Sticky.prototype = {
 		el.style.cssText = this.initialStyle;
 		el.style.position = "fixed";
 		el.style.top = this.offset.top + this.options.offset + "px";
-		el.classList.add(this.options["stickyClass"]);
 		mimicStyle(el, srcEl || this.stub);
+	},
+
+	//makes element classes reflecting it's state (this.isTop, this.isBottom, this.isFixed)
+	updateClasses: function(){
+		if (this.isTop){
+			this.el.classList.add(this.options["topClass"]);
+		} else {
+			this.el.classList.remove(this.options["topClass"]);
+		}
+
+		if (this.isFixed){
+			this.el.classList.add(this.options["stickyClass"]);
+		} else {
+			this.el.classList.remove(this.options["stickyClass"]);
+		}
+
+		if (this.isBottom){
+			this.el.classList.add(this.options["bottomClass"]);
+		} else {
+			this.el.classList.remove(this.options["bottomClass"]);
+		}
 	},
 
 	//count offset borders, container sizes. Detect needed container size
 	recalc: function(){
+		clearTimeout(this._recalcTimeout);
+		this._recalcTimeout = setTimeout(this._recalc, this.options.recalcInterval);
+	},
+	_recalc: function(){
 		//console.group("recalc:" + this.el.dataset["stickyId"])
 		var measureEl = (this.isTop ? this.el : this.stub);
 
