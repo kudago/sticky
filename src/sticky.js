@@ -1,6 +1,115 @@
 //Sticky - element being sticked at runtime
-function Sticky(){
-	this.create.apply(this, arguments);
+function Sticky(el, options){
+	if (el.getAttribute("data-sticky-id") === undefined) {
+		return console.log("Sticky already exist");
+	}
+
+	this.el = el;
+	this.parent = this.el.parentNode;
+
+	//recognize attributes
+	var dataset = el.dataset;
+	if (!dataset){
+		dataset = {};
+		if (el.getAttribute("data-restrict-within")) dataset["restrictWithin"] = el.getAttribute("data-restrict-within");
+		if (el.getAttribute("data-offset")) dataset["offset"] = el.getAttribute("data-offset");
+		if (el.getAttribute("data-stack")) dataset["stack"] = el.getAttribute("data-stack");
+		if (el.getAttribute("data-sticky-class")) dataset["stickyClass"] = el.getAttribute("data-sticky-class");
+	}
+	this.options = extend({}, this.options, dataset, options);
+
+	//query selector
+	if ( typeof this.options["restrictWithin"] === "string" && this.options["restrictWithin"].trim() ){
+		this.restrictWithin = document.body.querySelector(this.options["restrictWithin"]);			
+	} else {
+		this.restrictWithin = this.options["restrictWithin"];
+	}
+	
+	//keep list
+	this.el.setAttribute("data-sticky-id", Sticky.list.length);
+	this.id = Sticky.list.length;
+	Sticky.list.push(this);
+
+	//init vars
+	this.isFixed = false;
+	this.isBottom = false;
+	this.isTop = true;
+	this.updateClasses();
+	this.restrictBox = {
+		top: 0,
+		bottom: 9999
+	};
+	//self position & size
+	this.height = 0;
+	this.isDisabled = false;
+	//parent position & size
+	this.parentBox = {
+		top: 0,
+		height: 0
+	}
+	//mind gap from bottom & top in addition to restrictBox (for stacks)
+	this.options.offset = parseFloat(this.options["offset"]) || 0;
+	this.offset = {
+		top: 0,
+		bottom: 0
+	}
+
+	//Detect whether stacking is needed
+	var prevEl = this.el;
+	this.stackId = [];
+	this.stack = [];
+	if (this.options["stack"]) {
+		var stack = this.options["stack"].split(",");
+		for (var i = stack.length; i--;){
+			stack[i] = stack[i].trim();
+			if (!Sticky.stack[stack[i]]) Sticky.stack[stack[i]] = [];
+			this.stackId[i] = Sticky.stack[stack[i]].length;
+			this.stack.push(stack[i]);
+			Sticky.stack[stack[i]].push(this)
+		}
+	} else {
+		this.stackId[0] = Sticky.noStack.length;
+		Sticky.noStack.push(this);
+	}
+
+
+	//stub is a spacer filling space when element is stuck
+	this.stub = this.el.cloneNode();
+	this.stub.classList.add(this.options["stubClass"]);
+	this.stub.style.visibility = "hidden";
+	this.stub.style.display = "none";
+	this.stub.removeAttribute("hidden");
+
+	//save initial inline style
+	this.initialStyle = this.el.style.cssText;
+	this.initialDisplay = getComputedStyle(this.el)["display"];
+
+	//ensure parent's container relative coordinates
+	var pStyle = getComputedStyle(this.parent);
+	if (pStyle.position == "static") this.parent.style.position = "relative";
+
+	//bind methods
+	this.check = this.check.bind(this);
+	this.recalc = this.recalc.bind(this);
+	this._recalc = this._recalc.bind(this);
+	this.disable = this.disable.bind(this);
+	this.enable = this.enable.bind(this);
+	this.bindEvents = this.bindEvents.bind(this);
+	this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
+
+	//API events
+	document.addEventListener("sticky:recalc", this.recalc);
+	this.el.addEventListener("sticky:recalc", this.recalc);
+	this.el.addEventListener("DOMNodeRemoved", this.disable);
+	this.el.addEventListener("DOMNodeInserted", this.enable);
+	this.el.addEventListener("sticky:disable", this.disable);
+	this.el.addEventListener("sticky:enable", this.enable);
+
+	if (this.initialDisplay === "none") {
+		this.initialDisplay = "block";
+		this.disable();
+	}
+	else this.enable();
 }
 
 //list of instances
@@ -31,118 +140,6 @@ Sticky.prototype = {
 		/** @expose */
 		"collapse": true,
 		"recalcInterval": 20
-	},
-
-	create: function(el, options){
-		if (el.getAttribute("data-sticky-id") === undefined) {
-			return console.log("Sticky already exist");
-		}
-
-		this.el = el;
-		this.parent = this.el.parentNode;
-
-		//recognize attributes
-		var dataset = el.dataset;
-		if (!dataset){
-			dataset = {};
-			if (el.getAttribute("data-restrict-within")) dataset["restrictWithin"] = el.getAttribute("data-restrict-within");
-			if (el.getAttribute("data-offset")) dataset["offset"] = el.getAttribute("data-offset");
-			if (el.getAttribute("data-stack")) dataset["stack"] = el.getAttribute("data-stack");
-			if (el.getAttribute("data-sticky-class")) dataset["stickyClass"] = el.getAttribute("data-sticky-class");
-		}
-		this.options = extend({}, this.options, dataset, options);
-
-		//query selector
-		if ( typeof this.options["restrictWithin"] === "string" && this.options["restrictWithin"].trim() ){
-			this.restrictWithin = document.body.querySelector(this.options["restrictWithin"]);			
-		} else {
-			this.restrictWithin = this.options["restrictWithin"];
-		}
-		
-		//keep list
-		this.el.setAttribute("data-sticky-id", Sticky.list.length);
-		this.id = Sticky.list.length;
-		Sticky.list.push(this);
-
-		//init vars
-		this.isFixed = false;
-		this.isBottom = false;
-		this.isTop = true;
-		this.restrictBox = {
-			top: 0,
-			bottom: 9999
-		};
-		//self position & size
-		this.height = 0;
-		this.isDisabled = false;
-		//parent position & size
-		this.parentBox = {
-			top: 0,
-			height: 0
-		}
-		//mind gap from bottom & top in addition to restrictBox (for stacks)
-		this.options.offset = parseFloat(this.options["offset"]) || 0;
-		this.offset = {
-			top: 0,
-			bottom: 0
-		}
-
-		//Detect whether stacking needed
-		var prevEl = this.el;
-		this.stackId = [];
-		this.stack = [];
-		if (this.options["stack"]) {
-			var stack = this.options["stack"].split(",");
-			for (var i = stack.length; i--;){
-				stack[i] = stack[i].trim();
-				if (!Sticky.stack[stack[i]]) Sticky.stack[stack[i]] = [];
-				this.stackId[i] = Sticky.stack[stack[i]].length;
-				this.stack.push(stack[i]);
-				Sticky.stack[stack[i]].push(this)
-			}
-		} else {
-			this.stackId[0] = Sticky.noStack.length;
-			Sticky.noStack.push(this);
-		}
-
-
-		//stub is a spacer filling space when element is stuck
-		this.stub = this.el.cloneNode();
-		this.stub.classList.add(this.options["stubClass"]);
-		this.stub.style.visibility = "hidden";
-		this.stub.style.display = "none";
-		this.stub.removeAttribute("hidden");
-
-		//save initial inline style
-		this.initialStyle = this.el.style.cssText;
-		this.initialDisplay = getComputedStyle(this.el)["display"];
-
-		//ensure parent's container relative coordinates
-		var pStyle = getComputedStyle(this.parent);
-		if (pStyle.position == "static") this.parent.style.position = "relative";
-
-		//bind methods
-		this.check = this.check.bind(this);
-		this.recalc = this.recalc.bind(this);
-		this._recalc = this._recalc.bind(this);
-		this.disable = this.disable.bind(this);
-		this.enable = this.enable.bind(this);
-		this.bindEvents = this.bindEvents.bind(this);
-		this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
-
-		//API events
-		document.addEventListener("sticky:recalc", this.recalc);
-		this.el.addEventListener("sticky:recalc", this.recalc);
-		this.el.addEventListener("DOMNodeRemoved", this.disable);
-		this.el.addEventListener("DOMNodeInserted", this.enable);
-		this.el.addEventListener("sticky:disable", this.disable);
-		this.el.addEventListener("sticky:enable", this.enable);
-
-		if (this.initialDisplay === "none") {
-			this.initialDisplay = "block";
-			this.disable();
-		}
-		else this.enable();
 	},
 
 	//when element removed or made hidden.
