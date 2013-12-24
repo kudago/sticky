@@ -9,6 +9,7 @@ function extend(a){
 	return a;
 }
 
+//offset relative to the document, like jquery.position()
 function getBoundingOffsetRect(el){
 	var c = {top:0, left:0, right:0, bottom:0, width: 0, height: 0},
 		rect = el.getBoundingClientRect();
