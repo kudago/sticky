@@ -9,6 +9,7 @@
         }
         return a;
     }
+    //offset relative to the document, like jquery.position()
     function getBoundingOffsetRect(el) {
         var c = {
             top: 0,
@@ -91,7 +92,7 @@
             if (el.getAttribute("data-sticky-class")) dataset["stickyClass"] = el.getAttribute("data-sticky-class");
         }
         this.options = extend({}, this.options, dataset, options);
-        //query selector
+        //query selector, if passed one
         if (typeof this.options["restrictWithin"] === "string" && this.options["restrictWithin"].trim()) {
             this.restrictWithin = document.body.querySelector(this.options["restrictWithin"]);
         } else {
@@ -101,11 +102,12 @@
         this.el.setAttribute("data-sticky-id", Sticky.list.length);
         this.id = Sticky.list.length;
         Sticky.list.push(this);
-        //init vars
+        //state
         this.isFixed = false;
         this.isBottom = false;
         this.isTop = true;
         this.updateClasses();
+        //boundaries to strict within
         this.restrictBox = {
             top: 0,
             bottom: 9999
@@ -124,6 +126,8 @@
             top: 0,
             bottom: 0
         };
+        //additional gap if item being scrolled
+        this.scrollOffset = 0;
         //Detect whether stacking is needed
         var prevEl = this.el;
         this.stackId = [];
@@ -161,6 +165,13 @@
         this.enable = this.enable.bind(this);
         this.bindEvents = this.bindEvents.bind(this);
         this.adjustSizeAndPosition = this.adjustSizeAndPosition.bind(this);
+        this.park = this.park.bind(this);
+        this.stick = this.stick.bind(this);
+        this.parkStack = this.parkStack.bind(this);
+        this.stickStack = this.stickStack.bind(this);
+        this.captureScrollOffset = this.captureScrollOffset.bind(this);
+        this.observeStackScroll = this.observeStackScroll.bind(this);
+        this.stopObservingStackScroll = this.stopObservingStackScroll.bind(this);
         //API events
         document.addEventListener("sticky:recalc", this.recalc);
         this.el.addEventListener("sticky:recalc", this.recalc);
@@ -179,6 +190,8 @@
     Sticky.noStack = [];
     //stacks of items
     Sticky.stack = {};
+    //heights of stacks
+    Sticky.stackHeights = {};
     Sticky.prototype = {
         options: {
             /** @expose */
@@ -220,21 +233,25 @@
         bindEvents: function() {
             document.addEventListener("scroll", this.check);
             window.addEventListener("resize", this.recalc);
+            this.el.addEventListener("mouseover", this.observeStackScroll);
+            this.el.addEventListener("mouseout", this.stopObservingStackScroll);
         },
         unbindEvents: function() {
-            document.addEventListener("scroll", this.check);
-            window.addEventListener("resize", this.recalc);
+            document.removeEventListener("scroll", this.check);
+            window.removeEventListener("resize", this.recalc);
+            this.el.removeEventListener("mouseover", this.observeStackScroll);
+            this.el.removeEventListener("mouseout", this.stopObservingStackScroll);
         },
         //changing state necessity checker
         check: function() {
             var vpTop = window.pageYOffset || document.documentElement.scrollTop;
             //console.log("check:" + this.el.dataset["stickyId"], "isFixed:" + this.isFixed, this.restrictBox)
             if (this.isFixed) {
-                if (!this.isTop && vpTop + this.offset.top + this.options.offset + this.height + this.mt + this.mb >= this.restrictBox.bottom - this.offset.bottom) {
+                if (!this.isTop && vpTop + this.offset.top + this.options.offset + this.height + this.mt + this.mb + this.scrollOffset >= this.restrictBox.bottom - this.offset.bottom) {
                     //check bottom parking needed
                     this.parkBottom();
                 }
-                if (!this.isBottom && vpTop + this.offset.top + this.options.offset + this.mt <= this.restrictBox.top) {
+                if (!this.isBottom && vpTop + this.offset.top + this.options.offset + this.mt + this.scrollOffset <= this.restrictBox.top) {
                     //check top parking needed
                     this.parkTop();
                 }
@@ -265,44 +282,131 @@
             this.el.style.cssText = this.initialStyle;
             //this.stub = this.parent.replaceChild(this.el, this.stub);
             this.stub.style.display = "none";
+            this.scrollOffset = 0;
             this.isFixed = false;
             this.isTop = true;
             this.isBottom = false;
             this.updateClasses();
+            this.isStackParked = true;
+        },
+        //when stop needed somewhere in between top and bottom
+        park: function() {
+            this.isFixed = false;
+            this.isTop = false;
+            this.isBottom = false;
+            this.updateClasses();
+            this.isStackParked = true;
+            var offset = (window.pageYOffset || document.documentElement.scrollTop) + this.offset.top - this.parentBox.top + this.scrollOffset;
+            this.makeParkedStyle(offset);
         },
         //to make fixed
         //enhanced replace: faked visual stub is fastly replaced with natural one
         stick: function() {
             //this.el = this.parent.replaceChild(this.stub, this.el);
             this.stub.style.display = this.initialDisplay;
-            this.makeStickedStyle(this.el);
+            this.makeStickedStyle();
             //this.parent.insertBefore(this.el, this.stub);
             this.isFixed = true;
             this.isTop = false;
             this.isBottom = false;
             this.updateClasses();
+            this.isStackParked = false;
         },
         //when bottom land needed
         parkBottom: function() {
-            this.makeParkedBottomStyle(this.el);
+            this.makeParkedBottomStyle();
+            this.scrollOffset = 0;
             this.isFixed = false;
             this.isBottom = true;
             this.isTop = false;
             this.updateClasses();
+            this.isStackParked = true;
         },
-        //set up style of element as it is parked at the bottom
-        makeParkedBottomStyle: function(el) {
-            el.style.cssText = this.initialStyle;
-            el.style.position = "absolute";
-            el.style.top = this.restrictBox.bottom - this.offset.bottom - this.parentBox.top - this.height - this.mt - this.mb + "px";
-            mimicStyle(el, this.stub);
-            el.style.left = this.stub.offsetLeft + "px";
+        //park all items within stack passed/all stacks of this
+        //used when item was scrolled on
+        parkStack: function() {
+            var stack = Sticky.stack[this.stack[0]];
+            var first = stack[0], last = stack[stack.length - 1];
+            for (var i = 0; i < stack.length; i++) {
+                var item = stack[i];
+                item.park();
+            }
         },
-        makeStickedStyle: function(el, srcEl) {
-            el.style.cssText = this.initialStyle;
-            el.style.position = "fixed";
-            el.style.top = this.offset.top + this.options.offset + "px";
-            mimicStyle(el, srcEl || this.stub);
+        //unpark all items of stack passed
+        stickStack: function() {
+            var stack = Sticky.stack[this.stack[0]];
+            var first = stack[0], last = stack[stack.length - 1];
+            for (var i = 0; i < stack.length; i++) {
+                var item = stack[i];
+                item.stick();
+            }
+        },
+        //begin observing scroll to park stack
+        observeStackScroll: function() {
+            var stack = Sticky.stack[this.stack[0]];
+            var first = stack[0], last = stack[stack.length - 1];
+            //if stack is parked top or parked bottom - ignore
+            if (first.isTop || last.isTop) return;
+            //if stack isn’t higher than window height - ignore
+            if (Sticky.stackHeights[this.stack[0]] <= window.innerHeight && this.scrollOffset >= 0) return;
+            //capture stack’s scroll
+            this.scrollStartOffset = (window.pageYOffset || document.documentElement.scrollTop) + this.scrollOffset;
+            document.addEventListener("scroll", this.captureScrollOffset);
+        },
+        //stop observing scroll
+        stopObservingStackScroll: function() {
+            var stack = Sticky.stack[this.stack[0]];
+            var last = stack[stack.length - 1], first = stack[0];
+            document.removeEventListener("scroll", this.captureScrollOffset);
+            if (first.isTop || first.isBottom || last.isTop || last.isBottom) {
+                return;
+            }
+            if (this.isStackParked) this.stickStack();
+        },
+        //when item was scrolled on - capture how much it is scrolled
+        captureScrollOffset: function(e) {
+            var scrollOffset = this.scrollStartOffset - (window.pageYOffset || document.documentElement.scrollTop);
+            var stack = Sticky.stack[this.stack[0]];
+            var last = stack[stack.length - 1], first = stack[0];
+            //ignore outside sticking
+            if (first.isTop || first.isBottom || last.isTop || last.isBottom) {
+                return;
+            }
+            var stickNeeded = false, parkNeeded = false;
+            //if bottom is higher or equal than viewport’s bottom - stick within viewport
+            if (scrollOffset < window.innerHeight - Sticky.stackHeights[this.stack[0]]) {
+                scrollOffset = window.innerHeight - Sticky.stackHeights[this.stack[0]];
+                this.scrollStartOffset = (window.pageYOffset || document.documentElement.scrollTop) + scrollOffset;
+                stickNeeded = true;
+            } else if (scrollOffset > 0) {
+                scrollOffset = 0;
+                this.scrollStartOffset = window.pageYOffset || document.documentElement.scrollTop;
+                stickNeeded = true;
+            } else if (!this.isStackParked) {
+                parkNeeded = true;
+            }
+            for (var i = 0; i < stack.length; i++) {
+                var item = stack[i];
+                item.scrollOffset = scrollOffset;
+            }
+            if (stickNeeded && this.isStackParked) return this.stickStack(); else if (parkNeeded && !this.isStackParked) return this.parkStack();
+        },
+        //set up style of element as if it is parked somewhere / at the bottom
+        makeParkedStyle: function(top) {
+            this.el.style.cssText = this.initialStyle;
+            this.el.style.position = "absolute";
+            this.el.style.top = top + "px";
+            mimicStyle(this.el, this.stub);
+            this.el.style.left = this.stub.offsetLeft + "px";
+        },
+        makeParkedBottomStyle: function() {
+            this.makeParkedStyle(this.restrictBox.bottom - this.offset.bottom - this.parentBox.top - this.height - this.mt - this.mb);
+        },
+        makeStickedStyle: function() {
+            this.el.style.cssText = this.initialStyle;
+            this.el.style.position = "fixed";
+            this.el.style.top = this.offset.top + this.options.offset + this.scrollOffset + "px";
+            mimicStyle(this.el, this.stub);
         },
         //makes element classes reflecting it's state (this.isTop, this.isBottom, this.isFixed)
         updateClasses: function() {
@@ -342,6 +446,7 @@
             this.mr = ~~mStyle.marginRight.slice(0, -2);
             this.mt = ~~mStyle.marginTop.slice(0, -2);
             this.mb = ~~mStyle.marginBottom.slice(0, -2);
+            this.scrollOffset = 0;
             //update restrictions
             if (this.restrictWithin instanceof Element) {
                 var offsetRect = getBoundingOffsetRect(this.restrictWithin);
@@ -376,6 +481,8 @@
                             }
                         }
                     }
+                    //track stack heights;
+                    Sticky.stackHeights[this.stack[i]] = this.offset.top + this.height + this.mt + this.mb;
                 }
             } else if (prevSticky = Sticky.noStack[this.stackId[0] - 1]) {
                 prevSticky.restrictBox.bottom = this.restrictBox.top - this.mt;
@@ -387,9 +494,9 @@
             if (this.isTop) {
                 this.el.style.cssText = this.initialStyle;
             } else if (this.isBottom) {
-                this.makeParkedBottomStyle(this.el);
+                this.makeParkedBottomStyle();
             } else {
-                this.makeStickedStyle(this.el);
+                this.makeStickedStyle();
             }
             this.check();
         }

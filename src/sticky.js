@@ -339,7 +339,7 @@ Sticky.prototype = {
 		if (first.isTop || last.isTop) return; 
 		
 		//if stack isn’t higher than window height - ignore
-		if (Sticky.stackHeights[this.stack[0]] <= window.innerHeight) return;
+		if (Sticky.stackHeights[this.stack[0]] <= window.innerHeight && this.scrollOffset >= 0) return;
 
 		//capture stack’s scroll
 		this.scrollStartOffset = (window.pageYOffset || document.documentElement.scrollTop) + this.scrollOffset;
@@ -375,7 +375,7 @@ Sticky.prototype = {
 		var stickNeeded = false, parkNeeded = false;
 
 		//if bottom is higher or equal than viewport’s bottom - stick within viewport
-		if ( scrollOffset < window.innerHeight - (Sticky.stackHeights[this.stack[0]])){
+		if ( scrollOffset < window.innerHeight - (Sticky.stackHeights[this.stack[0]]) ){
 			scrollOffset = window.innerHeight - (Sticky.stackHeights[this.stack[0]]);
 			this.scrollStartOffset = (window.pageYOffset || document.documentElement.scrollTop) + scrollOffset;
 			stickNeeded = true;
@@ -389,19 +389,14 @@ Sticky.prototype = {
 		}
 
 		//if stack items is somewhere in between
-		else if (!this.isStackParked){
+		else if (!this.isStackParked ){
 			parkNeeded = true;
 		}
-
-		console.clear();
-		console.log(scrollOffset)
 
 		for (var i = 0; i < stack.length; i++){
 			var item = stack[i]
 			item.scrollOffset = scrollOffset
 		}
-		//TODO:S
-		//if stack is bound to the viewport - pass over
 
 		if (stickNeeded && this.isStackParked) return this.stickStack();
 		else if (parkNeeded && !this.isStackParked) return this.parkStack();
@@ -471,6 +466,8 @@ Sticky.prototype = {
 		this.mr = ~~mStyle.marginRight.slice(0,-2);
 		this.mt = ~~mStyle.marginTop.slice(0,-2);
 		this.mb = ~~mStyle.marginBottom.slice(0,-2);
+
+		this.scrollOffset = 0;
 
 		//update restrictions
 		if (this.restrictWithin instanceof Element){
