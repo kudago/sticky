@@ -164,7 +164,7 @@ Sticky.prototype = {
 		if (this.stub.parentNode) this.parent.removeChild(this.stub);
 		this.unbindEvents();
 		this.isDisabled = true;
-		document.dispatchEvent(new CustomEvent("sticky:recalc"))
+		trigger(document, "sticky:recalc")
 	},
 
 	//enables previously disabled element
@@ -173,21 +173,21 @@ Sticky.prototype = {
 		this.isDisabled = false;
 		this.bindEvents();
 		this.recalc();
-		document.dispatchEvent(new CustomEvent("sticky:recalc"))
+		trigger(document, "sticky:recalc")
 	},
 
 	bindEvents: function(){
-		document.addEventListener("scroll", this.check);
-		window.addEventListener("resize", this.recalc);
-		this.el.addEventListener("mouseover", this.observeStackScroll);
-		this.el.addEventListener("mouseout", this.stopObservingStackScroll);
+		on(document, "scroll", this.check);
+		on(window, "resize", this.recalc);
+		on(this.el, "mouseover", this.observeStackScroll);
+		on(this.el, "mouseout", this.stopObservingStackScroll);
 	},
 
 	unbindEvents: function(){
-		document.removeEventListener("scroll", this.check);
-		window.removeEventListener("resize", this.recalc);
-		this.el.removeEventListener("mouseover", this.observeStackScroll);
-		this.el.removeEventListener("mouseout", this.stopObservingStackScroll);
+		off(document, "scroll", this.check);
+		off(window, "resize", this.recalc);
+		off(this.el, "mouseover", this.observeStackScroll);
+		off(this.el, "mouseout", this.stopObservingStackScroll);
 	},
 
 	//changing state necessity checker
@@ -346,7 +346,7 @@ Sticky.prototype = {
 		//capture stack’s scroll
 		this.scrollStartOffset = (window.pageYOffset || document.documentElement.scrollTop) + this.scrollOffset;
 
-		document.addEventListener("scroll", this.captureScrollOffset)
+		on(document, "scroll", this.captureScrollOffset)
 	},
 
 	//stop observing scroll
@@ -356,7 +356,7 @@ Sticky.prototype = {
 
 		var last = stack[stack.length-1], first = stack[0];
 
-		document.removeEventListener("scroll", this.captureScrollOffset);
+		off(document, "scroll", this.captureScrollOffset);
 
 		if (first.isTop || first.isBottom || last.isTop || last.isBottom) {
 			return;

@@ -10,13 +10,27 @@ function extend(a){
 }
 
 /**
-* Simple event binder
+* Simple event methods
 */
 function on(el, evt, fn){
 	if (Sticky.$){
 		$(el).on(evt, fn);
 	} else {
 		el.addEventListener(evt, fn)
+	}
+}
+function off(el, evt, fn){
+	if (Sticky.$){
+		$(el).off(evt, fn);
+	} else {
+		el.removeEventListener(evt, fn)
+	}
+}
+function trigger(el, evt){
+	if (Sticky.$){
+		$(el).trigger(evt);
+	} else {
+		el.dispatchEvent(new CustomEvent(evt))
 	}
 }
 
