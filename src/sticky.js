@@ -20,11 +20,11 @@ function Sticky(el, options){
 
 	//query selector, if passed one
 	if ( typeof this.options["restrictWithin"] === "string" && this.options["restrictWithin"].trim() ){
-		this.restrictWithin = document.body.querySelector(this.options["restrictWithin"]);			
+		this.restrictWithin = document.body.querySelector(this.options["restrictWithin"]);
 	} else {
 		this.restrictWithin = this.options["restrictWithin"];
 	}
-	
+
 	//keep list
 	this.el.setAttribute("data-sticky-id", Sticky.list.length);
 	this.id = Sticky.list.length;
@@ -113,12 +113,12 @@ function Sticky(el, options){
 	this.stopObservingStackScroll = this.stopObservingStackScroll.bind(this);
 
 	//API events
-	document.addEventListener("sticky:recalc", this.recalc);
-	this.el.addEventListener("sticky:recalc", this.recalc);
-	this.el.addEventListener("DOMNodeRemoved", this.disable);
-	this.el.addEventListener("DOMNodeInserted", this.enable);
-	this.el.addEventListener("sticky:disable", this.disable);
-	this.el.addEventListener("sticky:enable", this.enable);
+	on(document, "sticky:recalc", this.recalc);
+	on(this.el, "sticky:recalc", this.recalc);
+	on(this.el, "DOMNodeRemoved", this.disable);
+	on(this.el, "DOMNodeInserted", this.enable);
+	on(this.el, "sticky:disable", this.disable);
+	on(this.el, "sticky:enable", this.enable);
 
 	if (this.initialDisplay === "none") {
 		this.initialDisplay = "block";
@@ -183,7 +183,7 @@ Sticky.prototype = {
 		this.el.addEventListener("mouseout", this.stopObservingStackScroll);
 	},
 
-	unbindEvents: function(){			
+	unbindEvents: function(){
 		document.removeEventListener("scroll", this.check);
 		window.removeEventListener("resize", this.recalc);
 		this.el.removeEventListener("mouseover", this.observeStackScroll);
@@ -333,11 +333,13 @@ Sticky.prototype = {
 	//begin observing scroll to park stack
 	observeStackScroll: function(){
 		var stack = Sticky.stack[this.stack[0]]
+		if (!stack) return;
+
 		var first = stack[0], last = stack[stack.length - 1];
 
 		//if stack is parked top or parked bottom - ignore
-		if (first.isTop || last.isTop) return; 
-		
+		if (first.isTop || last.isTop) return;
+
 		//if stack isn’t higher than window height - ignore
 		if (Sticky.stackHeights[this.stack[0]] <= window.innerHeight && this.scrollOffset >= 0) return;
 
@@ -350,6 +352,8 @@ Sticky.prototype = {
 	//stop observing scroll
 	stopObservingStackScroll: function(){
 		var stack = Sticky.stack[this.stack[0]];
+		if (!stack) return;
+
 		var last = stack[stack.length-1], first = stack[0];
 
 		document.removeEventListener("scroll", this.captureScrollOffset);
@@ -450,6 +454,7 @@ Sticky.prototype = {
 	},
 	_recalc: function(){
 		//console.group("recalc:" + this.el.dataset["stickyId"])
+		//element to mimic visual properties from
 		var measureEl = (this.isTop ? this.el : this.stub);
 
 		//update stub content
@@ -470,18 +475,7 @@ Sticky.prototype = {
 		this.scrollOffset = 0;
 
 		//update restrictions
-		if (this.restrictWithin instanceof Element){
-			var offsetRect = getBoundingOffsetRect(this.restrictWithin)
-			this.restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
-			//console.log(getBoundingOffsetRect(this.stub))
-			this.restrictBox.bottom = this.restrictWithin.offsetHeight + offsetRect.top;
-		} else if (this.restrictWithin instanceof Object) {
-			this.restrictBox = this.restrictWithin;
-		} else {
-			//case of parent container
-			this.restrictBox.top = getBoundingOffsetRect(measureEl).top;
-			this.restrictBox.bottom = this.parentBox.height + this.parentBox.top;
-		}
+		this.restrictBox = getRestrictBox(this.restrictWithin, measureEl);
 
 		//make restriction up to next sibling within one container
 		var prevSticky;
@@ -510,8 +504,8 @@ Sticky.prototype = {
 		} else if (prevSticky = Sticky.noStack[this.stackId[0] - 1]){
 			prevSticky.restrictBox.bottom = this.restrictBox.top - this.mt;
 		}
-		
-		clearTimeout(this._updTimeout); 
+
+		clearTimeout(this._updTimeout);
 		this._updTimeout = setTimeout(this.adjustSizeAndPosition, 0);
 		//console.groupEnd();
 	},

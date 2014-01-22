@@ -1,5 +1,5 @@
 //jquery-plugin
-if ($){
+if (window.$){
 	$['fn'][pluginName] = function (arg) {
 		return this['each'](function(i,e){
 			var $e = $(e);
@@ -7,6 +7,7 @@ if ($){
 			$e.data(pluginName, instance);
 		})
 	};
+	Sticky.$ = window.$;
 } else {
 	window["Sticky"] = Sticky;
 }

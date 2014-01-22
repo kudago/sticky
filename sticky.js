@@ -9,7 +9,19 @@
         }
         return a;
     }
-    //offset relative to the document, like jquery.position()
+    /**
+* Simple event binder
+*/
+    function on(el, evt, fn) {
+        if (Sticky.$) {
+            $(el).on(evt, fn);
+        } else {
+            el.addEventListener(evt, fn);
+        }
+    }
+    /**
+* Offset relative to the document, like jquery.position()
+*/
     function getBoundingOffsetRect(el) {
         var c = {
             top: 0,
@@ -26,6 +38,40 @@
         c.right = document.width - rect.right;
         c.bottom = window.innerHeight + (window.pageYOffset || document.documentElement.scrollTop) - rect.bottom;
         return c;
+    }
+    /**
+* return box with sizes based on any restrictwithin object passed
+*/
+    function getRestrictBox(restrictWithin, measureEl) {
+        var restrictBox = {
+            top: 0,
+            bottom: 0
+        };
+        if (restrictWithin instanceof Element) {
+            var offsetRect = getBoundingOffsetRect(restrictWithin);
+            restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
+            //console.log(getBoundingOffsetRect(this.stub))
+            restrictBox.bottom = restrictWithin.offsetHeight + offsetRect.top;
+        } else if (restrictWithin instanceof Object) {
+            if (restrictWithin.top instanceof Element) {
+                var offsetRect = getBoundingOffsetRect(restrictWithin.top);
+                restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
+            } else {
+                restrictBox.top = restrictWithin.top;
+            }
+            if (restrictWithin.bottom instanceof Element) {
+                var offsetRect = getBoundingOffsetRect(restrictWithin.bottom);
+                restrictBox.bottom = restrictWithin.bottom.offsetHeight + offsetRect.top;
+            } else {
+                restrictBox.bottom = restrictWithin.bottom;
+            }
+        } else {
+            //case of parent container
+            restrictBox.top = getBoundingOffsetRect(measureEl).top;
+            restrictBox.bottom = this.parentBox.height + this.parentBox.top;
+        }
+        //console.log("Restrictbox", restrictBox)
+        return restrictBox;
     }
     //removes iframe, objects etc shit
     var badTags = [ "object", "iframe", "embed", "img" ];
@@ -173,12 +219,12 @@
         this.observeStackScroll = this.observeStackScroll.bind(this);
         this.stopObservingStackScroll = this.stopObservingStackScroll.bind(this);
         //API events
-        document.addEventListener("sticky:recalc", this.recalc);
-        this.el.addEventListener("sticky:recalc", this.recalc);
-        this.el.addEventListener("DOMNodeRemoved", this.disable);
-        this.el.addEventListener("DOMNodeInserted", this.enable);
-        this.el.addEventListener("sticky:disable", this.disable);
-        this.el.addEventListener("sticky:enable", this.enable);
+        on(document, "sticky:recalc", this.recalc);
+        on(this.el, "sticky:recalc", this.recalc);
+        on(this.el, "DOMNodeRemoved", this.disable);
+        on(this.el, "DOMNodeInserted", this.enable);
+        on(this.el, "sticky:disable", this.disable);
+        on(this.el, "sticky:enable", this.enable);
         if (this.initialDisplay === "none") {
             this.initialDisplay = "block";
             this.disable();
@@ -344,6 +390,7 @@
         //begin observing scroll to park stack
         observeStackScroll: function() {
             var stack = Sticky.stack[this.stack[0]];
+            if (!stack) return;
             var first = stack[0], last = stack[stack.length - 1];
             //if stack is parked top or parked bottom - ignore
             if (first.isTop || last.isTop) return;
@@ -356,6 +403,7 @@
         //stop observing scroll
         stopObservingStackScroll: function() {
             var stack = Sticky.stack[this.stack[0]];
+            if (!stack) return;
             var last = stack[stack.length - 1], first = stack[0];
             document.removeEventListener("scroll", this.captureScrollOffset);
             if (first.isTop || first.isBottom || last.isTop || last.isBottom) {
@@ -433,6 +481,7 @@
         },
         _recalc: function() {
             //console.group("recalc:" + this.el.dataset["stickyId"])
+            //element to mimic visual properties from
             var measureEl = this.isTop ? this.el : this.stub;
             //update stub content
             this.stub.innerHTML = this.el.innerHTML;
@@ -448,18 +497,7 @@
             this.mb = ~~mStyle.marginBottom.slice(0, -2);
             this.scrollOffset = 0;
             //update restrictions
-            if (this.restrictWithin instanceof Element) {
-                var offsetRect = getBoundingOffsetRect(this.restrictWithin);
-                this.restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
-                //console.log(getBoundingOffsetRect(this.stub))
-                this.restrictBox.bottom = this.restrictWithin.offsetHeight + offsetRect.top;
-            } else if (this.restrictWithin instanceof Object) {
-                this.restrictBox = this.restrictWithin;
-            } else {
-                //case of parent container
-                this.restrictBox.top = getBoundingOffsetRect(measureEl).top;
-                this.restrictBox.bottom = this.parentBox.height + this.parentBox.top;
-            }
+            this.restrictBox = getRestrictBox(this.restrictWithin, measureEl);
             //make restriction up to next sibling within one container
             var prevSticky;
             this.offset.bottom = 0;
@@ -502,7 +540,7 @@
         }
     };
     //jquery-plugin
-    if ($) {
+    if (window.$) {
         $["fn"][pluginName] = function(arg) {
             return this["each"](function(i, e) {
                 var $e = $(e);
@@ -510,6 +548,7 @@
                 $e.data(pluginName, instance);
             });
         };
+        Sticky.$ = window.$;
     } else {
         window["Sticky"] = Sticky;
     }
