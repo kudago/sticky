@@ -14,3 +14,5 @@
 * Find how to get better mobile experience (too sluggish)
 
 * Fix yandex direct issues
+
+* Habrahabr-like mobile mode (shows when target has passed)

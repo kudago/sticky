@@ -53,40 +53,6 @@
         c.bottom = window.innerHeight + (window.pageYOffset || document.documentElement.scrollTop) - rect.bottom;
         return c;
     }
-    /**
-* return box with sizes based on any restrictwithin object passed
-*/
-    function getRestrictBox(restrictWithin, measureEl) {
-        var restrictBox = {
-            top: 0,
-            bottom: 0
-        };
-        if (restrictWithin instanceof Element) {
-            var offsetRect = getBoundingOffsetRect(restrictWithin);
-            restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
-            //console.log(getBoundingOffsetRect(this.stub))
-            restrictBox.bottom = restrictWithin.offsetHeight + offsetRect.top;
-        } else if (restrictWithin instanceof Object) {
-            if (restrictWithin.top instanceof Element) {
-                var offsetRect = getBoundingOffsetRect(restrictWithin.top);
-                restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
-            } else {
-                restrictBox.top = restrictWithin.top;
-            }
-            if (restrictWithin.bottom instanceof Element) {
-                var offsetRect = getBoundingOffsetRect(restrictWithin.bottom);
-                restrictBox.bottom = restrictWithin.bottom.offsetHeight + offsetRect.top;
-            } else {
-                restrictBox.bottom = restrictWithin.bottom;
-            }
-        } else {
-            //case of parent container
-            restrictBox.top = getBoundingOffsetRect(measureEl).top;
-            restrictBox.bottom = this.parentBox.height + this.parentBox.top;
-        }
-        //console.log("Restrictbox", restrictBox)
-        return restrictBox;
-    }
     //removes iframe, objects etc shit
     var badTags = [ "object", "iframe", "embed", "img" ];
     function cleanNode(node) {
@@ -511,7 +477,7 @@
             this.mb = ~~mStyle.marginBottom.slice(0, -2);
             this.scrollOffset = 0;
             //update restrictions
-            this.restrictBox = getRestrictBox(this.restrictWithin, measureEl);
+            this.restrictBox = this.getRestrictBox(this.restrictWithin, measureEl);
             //make restriction up to next sibling within one container
             var prevSticky;
             this.offset.bottom = 0;
@@ -541,6 +507,40 @@
             }
             clearTimeout(this._updTimeout);
             this._updTimeout = setTimeout(this.adjustSizeAndPosition, 0);
+        },
+        /**
+	* return box with sizes based on any restrictwithin object passed
+	*/
+        getRestrictBox: function(restrictWithin, measureEl) {
+            var restrictBox = {
+                top: 0,
+                bottom: 0
+            };
+            if (restrictWithin instanceof Element) {
+                var offsetRect = getBoundingOffsetRect(restrictWithin);
+                restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
+                //console.log(getBoundingOffsetRect(this.stub))
+                restrictBox.bottom = restrictWithin.offsetHeight + offsetRect.top;
+            } else if (restrictWithin instanceof Object) {
+                if (restrictWithin.top instanceof Element) {
+                    var offsetRect = getBoundingOffsetRect(restrictWithin.top);
+                    restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
+                } else {
+                    restrictBox.top = restrictWithin.top;
+                }
+                if (restrictWithin.bottom instanceof Element) {
+                    var offsetRect = getBoundingOffsetRect(restrictWithin.bottom);
+                    restrictBox.bottom = restrictWithin.bottom.offsetHeight + offsetRect.top;
+                } else {
+                    restrictBox.bottom = restrictWithin.bottom;
+                }
+            } else {
+                //case of parent container
+                restrictBox.top = getBoundingOffsetRect(measureEl).top;
+                restrictBox.bottom = this.parentBox.height + this.parentBox.top;
+            }
+            //console.log("Restrictbox", restrictBox)
+            return restrictBox;
         },
         adjustSizeAndPosition: function() {
             if (this.isTop) {

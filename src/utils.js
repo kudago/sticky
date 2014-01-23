@@ -51,43 +51,6 @@ function getBoundingOffsetRect(el){
 }
 
 
-/**
-* return box with sizes based on any restrictwithin object passed
-*/
-function getRestrictBox(restrictWithin, measureEl){
-	var restrictBox = {
-		top: 0,
-		bottom: 0
-	};
-	if (restrictWithin instanceof Element){
-		var offsetRect = getBoundingOffsetRect(restrictWithin)
-		restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
-		//console.log(getBoundingOffsetRect(this.stub))
-		restrictBox.bottom = restrictWithin.offsetHeight + offsetRect.top;
-	} else if (restrictWithin instanceof Object) {
-		if (restrictWithin.top instanceof Element) {
-			var offsetRect = getBoundingOffsetRect(restrictWithin.top)
-			restrictBox.top = Math.max(offsetRect.top, getBoundingOffsetRect(measureEl).top);
-		} else {
-			restrictBox.top = restrictWithin.top;
-		}
-		if (restrictWithin.bottom instanceof Element) {
-			var offsetRect = getBoundingOffsetRect(restrictWithin.bottom)
-			restrictBox.bottom = restrictWithin.bottom.offsetHeight + offsetRect.top;
-			//console.log(offsetRect)
-		} else {
-			restrictBox.bottom = restrictWithin.bottom;
-		}
-	} else {
-		//case of parent container
-		restrictBox.top = getBoundingOffsetRect(measureEl).top;
-		restrictBox.bottom = this.parentBox.height + this.parentBox.top;
-	}
-	//console.log("Restrictbox", restrictBox)
-	return restrictBox;
-}
-
-
 //removes iframe, objects etc shit
 var badTags = ["object", "iframe", "embed", "img"];
 function cleanNode(node){
