@@ -1,5 +1,7 @@
 # Sticky.js
 
+## Use [the better script](https://github.com/wilddeer/stickyfill)
+
 Makes elements sticky*.
 
 Supports all features of [sticky-kit.js](https://github.com/leafo/sticky-kit) and [sticky.js](https://github.com/garand/sticky), and
