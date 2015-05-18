@@ -1,4 +1,4 @@
-# Sticky [![Code Climate](https://codeclimate.com/github/dfcreative/component-sticky/badges/gpa.svg)](https://codeclimate.com/github/dfcreative/component-sticky)
+# Sticky [![Code Climate](https://codeclimate.com/github/kudago/sticky/badges/gpa.svg)](https://codeclimate.com/github/kudago/sticky)
 
 Position:sticky component.
 
