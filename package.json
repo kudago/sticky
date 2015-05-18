@@ -1,43 +1,40 @@
 {
-  "name": "sticky",
+  "name": "component-sticky",
   "version": "0.1.0",
-  "description": "Full-featured sticky-kit with stacking/exclusive modes of sticking, absence of jquery dependency and extremely enhanced performance.",
-  "homepage": "https://github.com/dfcreative/sticky",
+  "description": "Position:sticky comopnent with extended API",
+  "homepage": "https://github.com/kudago/sticky",
   "author": {
-    "name": "Dmitry Ivanov",
+    "name": "Dmitry Ywanov",
     "email": "df.creative@gmail.com",
-    "url": "dfcreative.github.io"
+    "url": "http://dfcreative.github.io"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/dfcreative/sticky.git"
+    "url": "git://github.com/kudago/sticky.git"
   },
   "bugs": {
-    "url": "https://github.com/dfcreative/sticky/issues"
+    "url": "https://github.com/kudago/sticky/issues"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/dfcreative/sticky/blob/master/LICENSE-MIT"
+      "url": "https://github.com/kudago/sticky/blob/master/LICENSE"
     }
   ],
-  "main": "Gruntfile.js",
+  "main": "index.js",
   "scripts": {
+    "watch": "watchify -r ./index.js:component-sticky -d -o bundle.js",
     "test": "grunt test"
   },
   "devDependencies": {
-    "grunt": "~0.4.1",
-    "grunt-contrib-jshint": "~0.6.4",
-    "grunt-contrib-qunit": "~0.2.2",
-    "grunt-contrib-concat": "~0.2.0",
-    "grunt-contrib-uglify": "~0.2.4",
-    "grunt-closure-compiler": ">0.0.20",
-    "grunt-homemade": "~0.2.1"
-  },
-  "peerDependencies": {
-    "grunt": "~0.4.1"
+    "watchify": "^3.2.1"
   },
   "keywords": [
     "gruntplugin"
-  ]
+  ],
+  "dependencies": {
+    "emmy": "^5.2.5",
+    "mucss": "^0.6.2",
+    "xtend": "^4.0.0"
+  }
 }

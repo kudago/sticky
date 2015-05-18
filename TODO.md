@@ -16,3 +16,6 @@
 * Fix yandex direct issues
 
 * Habrahabr-like mobile mode (shows when target has passed)
+
+* Debug scrolling. Now fails on some contents.
+* Debug yandex direct. Now shits on init.

@@ -1,89 +1,56 @@
-# Sticky.js
+# Sticky [![Code Climate](https://codeclimate.com/github/dfcreative/component-sticky/badges/gpa.svg)](https://codeclimate.com/github/dfcreative/component-sticky)
 
-## Use [the better script](https://github.com/wilddeer/stickyfill)
+Position:sticky component.
 
-Makes elements sticky*.
 
-Supports all features of [sticky-kit.js](https://github.com/leafo/sticky-kit) and [sticky.js](https://github.com/garand/sticky), and
-implements extra features:
-
-* Sticky modes: _stacked_ / _mutually exclusive_.
-* Any restricting containers possible, not only parent ones (unlike [sticky-kit.js](https://github.com/leafo/sticky-kit)).
-* No jquery dependency. Works regardless of jquery presence, but if it is, injects jquery plugin.
-* Careful treatment of element's style, like absolute/relative position, floating etc.
-* Works correctly on resizing.
-* Minds paddings/margins.
-* Multiple stacking
-* Dynamically hide/show/remove/append elements
-
-*Sticky elements — ones become fixed being scrolled on.
-
-## Use
+`$ npm install --save component-sticky`
 
 ```js
-//jQuery way
-$(".sticky-element").sticky({/*options*/});
+var Sticky = require('component-sticky');
 
-//no-jQuery way
-var sticky = new Sticky(document.querySelector(".sticky-element"), {/* options */});
+var sticky = new Sticky(document.querySelector(".sticky-element"), {
+	...
+});
 ```
 
 ## Options
 
-```js
-{
-	//How much pixels to mind from the top
-	offset: 0,
+### offset: 0
+How many pixels to mind from the top
 
-	//Any element, element selector or bounding box like {top: 0, bottom: 100 } or { top: element, bottom: element }
-	restrictWithin: parent,
+### within: parent
+Any element, element selector or bounding box like {top: 0, bottom: 100 } or { top: element, bottom: element }
 
-	//TODO: which boundary to bound to
-	vAlign: 'top',
+### stickyClass: 'is-stuck'
+Class to add when element is sticked
 
-	//Class to add when element is sticked
-	stickyClass: "is-stuck",
+### stubClass: 'sticky-stub'
+Class to add to a spacer (placeholder when element is stuck)
 
-	//Class to add to a spacer (placeholder when element is stuck)
-	stubClass: "sticky-stub",
+### bottomClass: 'is-bottom'
+When element is parked bottom
 
-	//When element is parked bottom
-	bottomClass: "is-bottom",
+### topClass: 'is-top'
+When element is parked on top
 
-	//When element is parked on top
-	topClass: "is-top",
+### stack: null
+Name of a group to stack elements within. _undefined_ stack won’t relate element to any group
 
-	//Name of a group to stack elements within. _undefined_ stack won’t relate element to any group
-	stack: null
-}
-```
 
 ## API
 
-#### `recalc` — forces update position, sizes, sticking. Automatically called on window resizes.
-```js
-//jQuery way
-$(document).trigger("sticky:recalc");
+### `recalc`
 
-//no-jQuery way
-document.dispatchEvent(new CustomEvent("sticky:recalc"));
-```
+Update position, sizes, sticking. Automatically called on window resize.
 
-You can target recalc by calling it on sticky element itself:
-```js
-$(".sticky-element").trigger("sticky:recalc")
-```
+### `disable`
 
-#### `disable` — unhooks sticky controller from element. Called automatically when element is removed. Useful if you hide element.
-```js
-element.attr("hidden", true);
-element.trigger("sticky:disable");
-```
+Unhook sticky controller from element. Called automatically when element is removed.
 
-#### `enable` — enables previously disabled sticky element. Useful when you show elemens.
-```js
-element.removeAttr("hidden");
-element.trigger("sticky:enable");
-```
+### `enable`
 
-Beware that not every browser supports `dispatchEvent` method. In order to make IE < 10 work, use one of the polyfills: [polyfill combinator](https://github.com/jonathantneal/polyfill), [modernizr](https://github.com/Modernizr/Modernizr) or [ES5 shim](https://github.com/termi/ES5-DOM-SHIM).
+Enable previously disabled sticky element.
+
+
+
+[![NPM](https://nodei.co/npm/component-sticky.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/component-sticky/)

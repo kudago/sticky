@@ -45,11 +45,10 @@ Side column
 	Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Cras justo odio, dapibus ac facilisis in, egestas eget quam.
 </div>
 
-<script src="../js/zepto.js"></script>
-<script src="../src/utils.js"></script>
-<script src="../src/monitor.js"></script>
-<script src="../src/sticky.js"></script>
-<script src="../src/jquery.sticky.js"></script>
+
+<script src="../bundle.js"></script>
 <script type="text/javascript">
+	var Sticky = require('component-sticky');
+
 	var sticker = new Sticky(document.querySelector(".side-column"));
 </script>
