@@ -14,6 +14,9 @@ var getOffsets = require('mucss/offsets');
 module.exports = Sticky;
 
 
+/**
+ * @constructor
+ */
 function Sticky(el, options){
 	if (el.getAttribute('data-sticky-id') === undefined) {
 		return console.log('Sticky already exist');
@@ -72,7 +75,7 @@ function Sticky(el, options){
 	this.offset = {
 		top: 0,
 		bottom: 0
-	}
+	};
 
 	//additional gap if item being scrolled
 	this.scrollOffset = 0;
