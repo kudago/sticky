@@ -8,7 +8,7 @@ var extend = require('xtend/mutable');
 var on = require('emmy/on');
 var off = require('emmy/off');
 var emit = require('emmy/emit');
-var getOffsets = require('mucss/offsets');
+var getOffsets = require('mucss/offset');
 
 
 module.exports = Sticky;

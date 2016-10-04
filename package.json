@@ -34,7 +34,7 @@
   ],
   "dependencies": {
     "emmy": "^5.2.5",
-    "mucss": "^0.6.2",
+    "mucss": "^1.1.5",
     "xtend": "^4.0.0"
   }
 }
