@@ -1,18 +1,7 @@
-/**
- * Sticky
- * @module
- */
-
-
-var extend = require('xtend/mutable');
 var on = require('emmy/on');
 var off = require('emmy/off');
-var emit = require('emmy/emit');
-var getOffsets = require('mucss/offset');
-
 
 module.exports = Sticky;
-
 
 /**
  * @constructor
@@ -34,7 +23,7 @@ function Sticky(el, options){
 		if (el.getAttribute('data-stack')) dataset['stack'] = el.getAttribute('data-stack');
 		if (el.getAttribute('data-sticky-class')) dataset['stickyClass'] = el.getAttribute('data-sticky-class');
 	}
-	this.options = extend({}, this.options, dataset, options);
+	this.options = Object.assign({}, this.options, dataset, options);
 
 	//query selector, if passed one
 	if ( typeof this.options['within'] === 'string' && this.options['within'].trim() ){
@@ -325,7 +314,6 @@ proto.parkBottom = function(){
  */
 proto.parkStack = function(){
 	var stack = Sticky.stack[this.stack[0]];
-	var first = stack[0], last = stack[stack.length - 1];
 
 	for (var i = 0; i < stack.length; i++){
 		var item = stack[i]
@@ -477,7 +465,7 @@ proto.recalc = function(){
 	cleanNode(this.stub);
 
 	//update parent container size & offsets
-	this.parentBox = getOffsets(this.parent);
+	this.parentBox = getOffset(this.parent);
 
 	//update self size & position
 	this.height = this.el.offsetHeight;
@@ -503,8 +491,8 @@ proto.recalc = function(){
 				var prevMeasurer = (prevSticky.isTop ? prevSticky.el : prevSticky.stub);
 				this.offset.top = prevSticky.offset.top + prevSticky.options.offset;
 				if (!(this.options['collapse'] && !isOverlap(measureEl, prevMeasurer))) {
-				 	this.offset.top += prevSticky.height + Math.max(prevSticky.mt, prevSticky.mb)//collapsed margin
-				 	var nextSticky = Sticky.stack[this.stack[i]][this.stackId[i]];
+					this.offset.top += prevSticky.height + Math.max(prevSticky.mt, prevSticky.mb)//collapsed margin
+					var nextSticky = Sticky.stack[this.stack[i]][this.stackId[i]];
 					//multistacking-way of correcting bottom offsets
 					for( var j = this.stackId[i] - 1; (prevSticky = Sticky.stack[this.stack[i]][j]); j--){
 						prevSticky.offset.bottom = Math.max(prevSticky.offset.bottom, nextSticky.offset.bottom + nextSticky.height + nextSticky.mt + nextSticky.mb);
@@ -534,19 +522,19 @@ proto.getRestrictBox = function(within, measureEl){
 		bottom: 0
 	};
 	if (within instanceof Element){
-		var offsetRect = getOffsets(within)
-		restrictBox.top = Math.max(offsetRect.top, getOffsets(measureEl).top);
-		//console.log(getOffsets(this.stub))
+		var offsetRect = getOffset(within)
+		restrictBox.top = Math.max(offsetRect.top, getOffset(measureEl).top);
+		//console.log(getOffset(this.stub))
 		restrictBox.bottom = within.offsetHeight + offsetRect.top;
 	} else if (within instanceof Object) {
 		if (within.top instanceof Element) {
-			var offsetRect = getOffsets(within.top)
-			restrictBox.top = Math.max(offsetRect.top, getOffsets(measureEl).top);
+			var offsetRect = getOffset(within.top)
+			restrictBox.top = Math.max(offsetRect.top, getOffset(measureEl).top);
 		} else {
 			restrictBox.top = within.top;
 		}
 		if (within.bottom instanceof Element) {
-			var offsetRect = getOffsets(within.bottom)
+			var offsetRect = getOffset(within.bottom)
 			restrictBox.bottom = within.bottom.offsetHeight + offsetRect.top;
 			//console.log(offsetRect)
 		} else {
@@ -554,7 +542,7 @@ proto.getRestrictBox = function(within, measureEl){
 		}
 	} else {
 		//case of parent container
-		restrictBox.top = getOffsets(measureEl).top;
+		restrictBox.top = getOffset(measureEl).top;
 		restrictBox.bottom = this.parentBox.height + this.parentBox.top;
 	}
 	//console.log('Restrictbox', restrictBox)
@@ -606,13 +594,13 @@ var directions = ['left', 'top', 'right', 'bottom'],
 /** copies size-related style of stub */
 function mimicStyle(to, from){
 	var stubStyle = getComputedStyle(from),
-		stubOffset = getOffsets(from),
+		stubOffset = getOffset(from),
 		pl = 0, pr = 0, ml = 0;
+
 	if (stubStyle['box-sizing'] !== 'border-box'){
 		pl = ~~stubStyle.paddingLeft.slice(0,-2)
 		pr = ~~stubStyle.paddingRight.slice(0,-2)
 	}
-
 	to.style.width = (stubOffset.width - pl - pr) + 'px';
 	to.style.left = stubOffset.left + 'px';
 	to.style.marginLeft = 0;
@@ -636,4 +624,37 @@ function isOverlap(left, right){
 		return false;
 	}
 	return true;
+}
+
+
+function getOffset(el) {
+	let rect = el.getBoundingClientRect()
+
+	//whether element is or is in fixed
+	var fixed = isFixed(el);
+	var xOffset = fixed ? 0 : window.pageXOffset;
+	var yOffset = fixed ? 0 : window.pageYOffset;
+
+	return {
+		left: rect.left + xOffset,
+		top: rect.top + yOffset,
+		width: rect.width,
+		height: rect.height
+	};
+}
+
+function isFixed (el) {
+	var parentEl = el;
+
+	//window is fixed, btw
+	if (el === window) return true;
+
+	//unlike the doc
+	if (el === document) return false;
+
+	while (parentEl) {
+		if (getComputedStyle(parentEl).position === 'fixed') return true;
+		parentEl = parentEl.offsetParent;
+	}
+	return false;
 }

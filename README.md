@@ -2,7 +2,7 @@
 
 <!-- [![Code Climate](https://codeclimate.com/github/kudago/sticky/badges/gpa.svg)](https://codeclimate.com/github/kudago/sticky) -->
 
-Position:sticky component.
+Position:sticky that works.
 
 
 `$ npm install --save component-sticky`
@@ -18,7 +18,7 @@ var sticky = new Sticky(document.querySelector(".sticky-element"), {
 ## Options
 
 ### offset: 0
-How many pixels to mind from the top
+How many pixels to skip from the top
 
 ### within: parent
 Any element, element selector or bounding box like {top: 0, bottom: 100 } or { top: element, bottom: element }
@@ -41,15 +41,15 @@ Name of a group to stack elements within. _undefined_ stack won’t relate eleme
 
 ## API
 
-### `recalc`
+### `aticky.recalc()`
 
 Update position, sizes, sticking. Automatically called on window resize.
 
-### `disable`
+### `sticky.disable()`
 
 Unhook sticky controller from element. Called automatically when element is removed.
 
-### `enable`
+### `sticky.enable(`
 
 Enable previously disabled sticky element.
 

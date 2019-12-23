@@ -4,7 +4,7 @@
   "description": "Position:sticky comopnent with extended API",
   "homepage": "https://github.com/kudago/sticky",
   "author": {
-    "name": "Dmitry Ywanov",
+    "name": "Dmitry Yv",
     "email": "df.creative@gmail.com",
     "url": "http://dfcreative.github.io"
   },
@@ -23,18 +23,13 @@
   ],
   "main": "index.js",
   "scripts": {
-    "watch": "watchify -r ./index.js:component-sticky -d -o bundle.js",
-    "test": "grunt test"
+    "start": "parcel serve --no-hmr test/1.html"
   },
   "devDependencies": {
     "watchify": "^3.2.1"
   },
-  "keywords": [
-    "gruntplugin"
-  ],
+  "keywords": [],
   "dependencies": {
-    "emmy": "^5.2.5",
-    "mucss": "^1.1.5",
-    "xtend": "^4.0.0"
+    "emmy": "^7.0.0"
   }
 }
